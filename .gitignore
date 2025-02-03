@@ -163,5 +163,8 @@ cython_debug/
 .idea/
 
 # VS Code
-.vscode
-.devcontainer
+.vscode/settings.json
+.vscode/PythonImportHelper-v2-Completion.json
+
+# dataset
+data/

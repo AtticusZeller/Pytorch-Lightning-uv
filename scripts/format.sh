@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/usr/bin/env bash
 set -x
 
 ruff check src tests --fix
