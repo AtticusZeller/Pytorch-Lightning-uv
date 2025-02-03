@@ -1,19 +1,25 @@
-from src.python_uv.data import dict_operations, list_operations, tuple_operations
+import torch
+from kornia.image import Image
+
+from pytorch_lightning_uv.data import MNIST, to_kornia_image
 
 
-def test_list_operations() -> None:
-    result = list_operations()
-    assert len(result) == 8
-    assert result[-1] == 8
+def test_dataset():
+    train_dataset = MNIST(
+        root="./data", train=True, download=True, transform=to_kornia_image
+    )
 
+    test_dataset = MNIST(
+        root="./data", train=False, download=True, transform=to_kornia_image
+    )
+    train_img = train_dataset[1][0]
+    test_img = test_dataset[1][0]
 
-def test_dict_operations() -> None:
-    result = dict_operations()
-    assert len(result) == 4
-    assert result["grape"] == 4
-
-
-def test_tuple_operations() -> None:
-    result = tuple_operations()
-    assert len(result) == 3
-    assert isinstance(result[1], str)
+    assert isinstance(train_img, Image)
+    assert isinstance(test_img, Image)
+    assert len(train_dataset) == 60000
+    assert len(test_dataset) == 10000
+    assert train_img.shape == (1, 28, 28)
+    assert test_img.shape == (1, 28, 28)
+    assert train_img.dtype == torch.uint8
+    assert test_img.dtype == torch.uint8
