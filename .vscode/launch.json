@@ -2,7 +2,7 @@
   "configurations": [
     {
       "console": "integratedTerminal",
-      "justMyCode": false,
+      "justMyCode": true,
       "name": "Python: Debug Tests",
       "program": "${file}",
       "purpose": [
