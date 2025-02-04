@@ -1,0 +1,6 @@
+model:
+  activation: relu
+  dropout: 0.1
+  hidden_size: 512
+  name: resnet18
+  num_layers: 18

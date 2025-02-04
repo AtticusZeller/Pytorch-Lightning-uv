@@ -1,0 +1,9 @@
+data:
+  augmentation:
+  - random_crop
+  - random_flip
+  batch_size: 128
+  dataset: cifar10
+  num_workers: 4
+  train_path: data/cifar10/train
+  val_path: data/cifar10/val

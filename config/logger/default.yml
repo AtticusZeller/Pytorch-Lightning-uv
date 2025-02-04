@@ -1,0 +1,6 @@
+logger:
+  config: null
+  entity: atticux
+  name: wandb
+  project: pytorch-lightning-uv
+  run_name: null
