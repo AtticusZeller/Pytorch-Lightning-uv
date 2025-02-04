@@ -1,8 +1,11 @@
+import numpy as np
+import pytest
 import torch
 from kornia.image import Image
+from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from pytorch_lightning_uv.data import MNIST, to_kornia_image, to_torch_tensor
+from pytorch_lightning_uv.data import MNIST, to_kornia_image, to_tensor
 
 
 def test_dataset() -> None:
@@ -27,9 +30,7 @@ def test_dataset() -> None:
 
 
 def test_dataloader() -> None:
-    from torch.utils.data import DataLoader
-
-    transform_funcs = transforms.Compose([to_kornia_image, to_torch_tensor])
+    transform_funcs = transforms.Compose([to_kornia_image, to_tensor])
 
     train_dataset = MNIST(
         root="./data", train=True, download=True, transform=transform_funcs
@@ -71,3 +72,29 @@ def test_dataloader() -> None:
     test_images, test_labels = next(iter(test_loader))
     assert test_images.shape == (batch_size, 1, 28, 28)
     assert test_labels.shape == (batch_size,)
+
+
+def test_to_tensor():
+    # Test with kornia Image
+    img_tensor = torch.zeros((1, 28, 28), dtype=torch.uint8)
+    kornia_img = to_kornia_image(img_tensor.squeeze())
+    converted = to_tensor(kornia_img)
+    assert torch.is_tensor(converted)
+    assert converted.shape == (1, 28, 28)
+
+    # Test with numpy array
+    np_img = np.zeros((28, 28), dtype=np.uint8)
+    converted = to_tensor(np_img)
+    assert torch.is_tensor(converted)
+    assert converted.shape == (1, 28, 28)
+
+    # Test with torch tensor
+    torch_img = torch.zeros((1, 28, 28))
+    converted = to_tensor(torch_img)
+    assert torch.is_tensor(converted)
+    assert converted.shape == (1, 28, 28)
+    assert converted is torch_img  # Should return same object
+
+    # Test invalid input
+    with pytest.raises(ValueError):
+        to_tensor("invalid")

@@ -3,12 +3,14 @@ from pathlib import Path
 from typing import Any
 from urllib.error import URLError
 
+import numpy as np
 import torch
 from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
 from kornia.image.base import ColorSpace
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
+from torchvision.transforms import functional as F
 
 
 class MNIST(VisionDataset):
@@ -189,17 +191,22 @@ def to_kornia_image(img: torch.Tensor) -> Image:
     return Image(img_channels_first, pixel_format, layout)
 
 
-def to_torch_tensor(img: Image) -> torch.Tensor:
+def to_tensor(img: Image | np.ndarray | torch.Tensor) -> torch.Tensor:
     """Convert a kornia Image to a torch tensor.
 
     Parameters
     ----------
-    img : Image
-        Input kornia Image with shape (1, H, W)
+    img : Image | np.ndarray | torch.Tensor
 
     Returns
     -------
     torch.Tensor
-        Torch tensor with shape (1, H, W)
     """
-    return img.data
+    if isinstance(img, Image):
+        return img.data
+    elif isinstance(img, np.ndarray):
+        return F.to_tensor(img)
+    elif torch.is_tensor(img):
+        return img
+    else:
+        raise ValueError("Input should be either a kornia Image or a torch tensor")
