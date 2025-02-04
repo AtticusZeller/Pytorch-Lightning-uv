@@ -187,3 +187,19 @@ def to_kornia_image(img: torch.Tensor) -> Image:
 
     # Create kornia Image
     return Image(img_channels_first, pixel_format, layout)
+
+
+def to_torch_tensor(img: Image) -> torch.Tensor:
+    """Convert a kornia Image to a torch tensor.
+
+    Parameters
+    ----------
+    img : Image
+        Input kornia Image with shape (1, H, W)
+
+    Returns
+    -------
+    torch.Tensor
+        Torch tensor with shape (1, H, W)
+    """
+    return img.data
