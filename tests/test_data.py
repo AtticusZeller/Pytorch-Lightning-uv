@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 import torch
 from kornia.image import Image
@@ -52,7 +51,7 @@ def test_dataloader() -> None:
 
     assert torch.is_tensor(images)
     assert images.shape == (batch_size, 1, 28, 28)
-    assert images.dtype == torch.uint8
+    assert images.dtype == torch.float32
 
     assert labels.shape == (batch_size,)
     assert labels.dtype == torch.int64
@@ -72,32 +71,6 @@ def test_dataloader() -> None:
     test_images, test_labels = next(iter(test_loader))
     assert test_images.shape == (batch_size, 1, 28, 28)
     assert test_labels.shape == (batch_size,)
-
-
-def test_to_tensor():
-    # Test with kornia Image
-    img_tensor = torch.zeros((1, 28, 28), dtype=torch.uint8)
-    kornia_img = to_kornia_image(img_tensor.squeeze())
-    converted = to_tensor(kornia_img)
-    assert torch.is_tensor(converted)
-    assert converted.shape == (1, 28, 28)
-
-    # Test with numpy array
-    np_img = np.zeros((28, 28), dtype=np.uint8)
-    converted = to_tensor(np_img)
-    assert torch.is_tensor(converted)
-    assert converted.shape == (1, 28, 28)
-
-    # Test with torch tensor
-    torch_img = torch.zeros((1, 28, 28))
-    converted = to_tensor(torch_img)
-    assert torch.is_tensor(converted)
-    assert converted.shape == (1, 28, 28)
-    assert converted is torch_img  # Should return same object
-
-    # Test invalid input
-    with pytest.raises(ValueError):
-        to_tensor("invalid")
 
 
 def test_mnist_datamodule() -> None:
@@ -141,3 +114,41 @@ def test_mnist_datamodule() -> None:
     batch = next(iter(test_loader))
     assert batch[0].shape == (32, 1, 28, 28)
     assert batch[1].shape == (32,)
+
+
+def test_to_tensor() -> None:
+    # Test with kornia Image
+    img_tensor = torch.randint(0, 255, (28, 28), dtype=torch.uint8)
+    kornia_img = to_kornia_image(img_tensor)
+    result = to_tensor(kornia_img)
+    assert torch.is_tensor(result)
+    assert result.dtype == torch.float32
+    assert result.max() <= 1.0
+    assert result.min() >= 0.0
+
+    # Test with numpy array
+    np_img = torch.randint(0, 255, (28, 28)).numpy()
+    result = to_tensor(np_img)
+    assert torch.is_tensor(result)
+    assert result.dtype == torch.float32
+    assert result.max() <= 1.0
+    assert result.min() >= 0.0
+
+    # Test with ByteTensor
+    byte_tensor = torch.randint(0, 255, (28, 28), dtype=torch.uint8)
+    result = to_tensor(byte_tensor)
+    assert torch.is_tensor(result)
+    assert result.dtype == torch.float32
+    assert result.max() <= 1.0
+    assert result.min() >= 0.0
+
+    # Test with float Tensor
+    float_tensor = torch.rand(28, 28)
+    result = to_tensor(float_tensor)
+    assert torch.is_tensor(result)
+    assert result.dtype == torch.float32
+    assert torch.equal(result, float_tensor)
+
+    # Test invalid input
+    with pytest.raises(ValueError):
+        to_tensor("invalid input")

@@ -8,12 +8,11 @@ import numpy as np
 import torch
 from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
 from kornia.image.base import ColorSpace
-from torch import Tensor
+from torch import Tensor, is_tensor
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
-from torchvision.transforms import functional as F
 from torchvision.transforms.transforms import Compose as trans_compose
 
 
@@ -47,8 +46,8 @@ def to_kornia_image(img: Tensor) -> Image:
     return Image(img_channels_first, pixel_format, layout)
 
 
-def to_tensor(img: Image | np.ndarray | Tensor) -> Tensor:
-    """Convert a kornia Image to a torch tensor.
+def to_tensor(data: Image | np.ndarray | Tensor) -> Tensor:
+    """Convert image tensor within [0,1]
 
     Parameters
     ----------
@@ -56,16 +55,20 @@ def to_tensor(img: Image | np.ndarray | Tensor) -> Tensor:
 
     Returns
     -------
-    Tensor
+    Tensor: dtype = torch.float32,value within [0,1]
     """
-    if isinstance(img, Image):
-        return img.data
-    elif isinstance(img, np.ndarray):
-        return F.to_tensor(img)
-    elif torch.is_tensor(img):
-        return img
-    else:
-        raise ValueError("Input should be either a kornia Image or a torch tensor")
+    if isinstance(data, Image):
+        data = data.data
+
+    if isinstance(data, np.ndarray):
+        return torch.from_numpy(data).float().div(255)
+
+    if is_tensor(data):
+        if isinstance(data, torch.ByteTensor):
+            return data.float().div(255)
+        else:
+            return data
+    raise ValueError("Input should be either a kornia Image or a torch tensor")
 
 
 class MNIST(VisionDataset):
