@@ -3,36 +3,76 @@ from pathlib import Path
 from typing import Any
 from urllib.error import URLError
 
+import lightning as L
 import numpy as np
 import torch
 from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
 from kornia.image.base import ColorSpace
+from torch import Tensor
+from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 from torchvision.transforms import functional as F
+from torchvision.transforms.transforms import Compose as trans_compose
 
 
-class MNIST(VisionDataset):
-    """`MNIST <http://yann.lecun.com/exdb/mnist/>`_ Dataset.
+def to_kornia_image(img: Tensor) -> Image:
+    """Convert a torch tensor to a kornia Image.
 
     Parameters
     ----------
-    root : str | Path
-        root directory of dataset
-    train : bool, optional
-        load whether train or test data, by default True
-    transform : Callable | None, optional
-        _description_, by default None
-    target_transform : Callable | None, optional
-        _description_, by default None
-    download : bool, optional
-        download data if is not exist, by default True
+    img : Tensor
+        Input tensor with shape (H, W)
 
-    Raises
-    ------
-    RuntimeError
-        no dataset found
+    Returns
+    -------
+    Image
+        Kornia Image with shape (1, H, W)
+    """
+    # Add channel dimension
+    img_channels_first = img.unsqueeze(0)
+
+    # Define image layout
+    layout = ImageLayout(
+        image_size=ImageSize(28, 28),
+        channels=1,
+        channels_order=ChannelsOrder.CHANNELS_FIRST,
+    )
+
+    # Define pixel format
+    pixel_format = PixelFormat(color_space=ColorSpace.GRAY, bit_depth=8)
+
+    # Create kornia Image
+    return Image(img_channels_first, pixel_format, layout)
+
+
+def to_tensor(img: Image | np.ndarray | Tensor) -> Tensor:
+    """Convert a kornia Image to a torch tensor.
+
+    Parameters
+    ----------
+    img : Image | np.ndarray | Tensor
+
+    Returns
+    -------
+    Tensor
+    """
+    if isinstance(img, Image):
+        return img.data
+    elif isinstance(img, np.ndarray):
+        return F.to_tensor(img)
+    elif torch.is_tensor(img):
+        return img
+    else:
+        raise ValueError("Input should be either a kornia Image or a torch tensor")
+
+
+class MNIST(VisionDataset):
+    """`MNIST <http://yann.lecun.com/exdb/mnist/>` Dataset.
+    Responsible for downloading,vectorize and splitting it into train and test dataset.
+    It is a subclass of torch.utils.data Dataset class.
+    It is necessary to override the ``__getitem__`` and ``__len__`` method.
     """
 
     mirrors = [
@@ -91,7 +131,7 @@ class MNIST(VisionDataset):
 
         self.data, self.targets = self._load_data()
 
-    def _load_data(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def _load_data(self) -> tuple[Tensor, Tensor]:
         image_file = f"{'train' if self.train else 't10k'}-images-idx3-ubyte"
         data = read_image_file(self.raw_folder.joinpath(image_file))
 
@@ -100,7 +140,7 @@ class MNIST(VisionDataset):
 
         return data, targets
 
-    def __getitem__(self, index: int) -> tuple[Any | Image, Any | int]:
+    def __getitem__(self, index: int) -> tuple[Any | Tensor, Any | int]:
         """get raw or transformed data
 
         Parameters
@@ -161,52 +201,50 @@ class MNIST(VisionDataset):
         return f"Split: {split}"
 
 
-def to_kornia_image(img: torch.Tensor) -> Image:
-    """Convert a torch tensor to a kornia Image.
-
-    Parameters
-    ----------
-    img : torch.Tensor
-        Input tensor with shape (H, W)
-
-    Returns
-    -------
-    Image
-        Kornia Image with shape (1, H, W)
+class MNISTDataModule(L.LightningDataModule):
+    """lightning DataModule for MNIST dataset
+    Ref: `https://lightning.ai/docs/pytorch/stable/data/datamodule.html#lightningdatamodule`
     """
-    # Add channel dimension
-    img_channels_first = img.unsqueeze(0)
 
-    # Define image layout
-    layout = ImageLayout(
-        image_size=ImageSize(28, 28),
-        channels=1,
-        channels_order=ChannelsOrder.CHANNELS_FIRST,
-    )
+    def __init__(
+        self,
+        data_dir: str | Path = "./data",
+        batch_size: int = 32,
+        transforms: list[Callable] | None = None,
+    ) -> None:
+        super().__init__()
+        self.data_dir = Path(data_dir)
+        self.batch_size = batch_size
+        if transforms and isinstance(transforms, list):
+            self.transform = trans_compose(transforms)
 
-    # Define pixel format
-    pixel_format = PixelFormat(color_space=ColorSpace.GRAY, bit_depth=8)
+    def setup(self, stage: str):
+        # Assign train/val datasets for use in dataloaders
+        if stage == "fit":
+            mnist_full = MNIST(self.data_dir, train=True, transform=self.transform)
+            self.mnist_train, self.mnist_val = random_split(
+                mnist_full, [55000, 5000], generator=torch.Generator().manual_seed(42)
+            )
 
-    # Create kornia Image
-    return Image(img_channels_first, pixel_format, layout)
+        # Assign test dataset for use in dataloader(s)
+        if stage == "test":
+            self.mnist_test = MNIST(
+                self.data_dir, train=False, transform=self.transform
+            )
 
+    def train_dataloader(self) -> DataLoader:
+        """This is the dataloader that the Trainer fit() method uses."""
+        return DataLoader(self.mnist_train, batch_size=self.batch_size)
 
-def to_tensor(img: Image | np.ndarray | torch.Tensor) -> torch.Tensor:
-    """Convert a kornia Image to a torch tensor.
+    def val_dataloader(self) -> DataLoader:
+        """This is the dataloader that the Trainer fit() and validate() methods uses."""
+        return DataLoader(self.mnist_val, batch_size=self.batch_size)
 
-    Parameters
-    ----------
-    img : Image | np.ndarray | torch.Tensor
+    def test_dataloader(self) -> DataLoader:
+        """This is the dataloader that the Trainer test() method uses."""
+        return DataLoader(self.mnist_test, batch_size=self.batch_size)
 
-    Returns
-    -------
-    torch.Tensor
-    """
-    if isinstance(img, Image):
-        return img.data
-    elif isinstance(img, np.ndarray):
-        return F.to_tensor(img)
-    elif torch.is_tensor(img):
-        return img
-    else:
-        raise ValueError("Input should be either a kornia Image or a torch tensor")
+    def prepare_data(self) -> None:
+        """load raw data or tokenize data"""
+        MNIST(self.data_dir, train=True, download=True)
+        MNIST(self.data_dir, train=False, download=True)

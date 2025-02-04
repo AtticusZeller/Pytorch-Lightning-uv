@@ -5,7 +5,7 @@ from kornia.image import Image
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from pytorch_lightning_uv.data import MNIST, to_kornia_image, to_tensor
+from pytorch_lightning_uv.data import MNIST, MNISTDataModule, to_kornia_image, to_tensor
 
 
 def test_dataset() -> None:
@@ -98,3 +98,46 @@ def test_to_tensor():
     # Test invalid input
     with pytest.raises(ValueError):
         to_tensor("invalid")
+
+
+def test_mnist_datamodule() -> None:
+    # Initialize datamodule
+    transform_list = [to_kornia_image, to_tensor]
+    dm = MNISTDataModule(data_dir="./data", batch_size=32, transforms=transform_list)
+
+    # Test prepare_data
+    dm.prepare_data()
+
+    # Test setup for fit stage
+    dm.setup("fit")
+    assert hasattr(dm, "mnist_train")
+    assert hasattr(dm, "mnist_val")
+    assert len(dm.mnist_train) == 55000
+    assert len(dm.mnist_val) == 5000
+
+    # Test train dataloader
+    train_loader = dm.train_dataloader()
+    assert isinstance(train_loader, DataLoader)
+    batch = next(iter(train_loader))
+    assert len(batch) == 2  # (images, labels)
+    assert batch[0].shape == (32, 1, 28, 28)
+    assert batch[1].shape == (32,)
+
+    # Test val dataloader
+    val_loader = dm.val_dataloader()
+    assert isinstance(val_loader, DataLoader)
+    batch = next(iter(val_loader))
+    assert batch[0].shape == (32, 1, 28, 28)
+    assert batch[1].shape == (32,)
+
+    # Test setup for test stage
+    dm.setup("test")
+    assert hasattr(dm, "mnist_test")
+    assert len(dm.mnist_test) == 10000
+
+    # Test test dataloader
+    test_loader = dm.test_dataloader()
+    assert isinstance(test_loader, DataLoader)
+    batch = next(iter(test_loader))
+    assert batch[0].shape == (32, 1, 28, 28)
+    assert batch[1].shape == (32,)
