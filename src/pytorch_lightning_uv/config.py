@@ -25,11 +25,9 @@ class OptimizerConfig:
 
 @dataclass
 class DataConfig:
-    dataset: str = "cifar10"
+    dataset: str = "MNIST"
     batch_size: int = 128
     num_workers: int = 4
-    train_path: str = "data/cifar10/train"
-    val_path: str = "data/cifar10/val"
     augmentation: list[str] = field(
         default_factory=lambda: ["random_crop", "random_flip"]
     )
@@ -37,7 +35,7 @@ class DataConfig:
 
 @dataclass
 class TrainingConfig:
-    max_epochs: int = 100
+    max_epochs: int = 10
     gradient_clip_val: float | None = 1.0
     accumulate_grad_batches: int = 1
     precision: int = 32
@@ -45,10 +43,9 @@ class TrainingConfig:
 
 @dataclass
 class LoggerConfig:
-    name: str = "wandb"
     run_name: str | None = None
     config: dict | None = None
-    entity: str = "atticux"
+    entity: str = "atticux"  # set to name of your wandb team
     project: str = "pytorch-lightning-uv"
 
 
@@ -60,6 +57,16 @@ class Config:
     training: TrainingConfig | None = None
     optimizer: OptimizerConfig | None = None
     seed: int = 42
+
+    def as_dict(self):
+        return {
+            "model": OmegaConf.to_container(OmegaConf.structured(self.model)),
+            "logger": OmegaConf.to_container(OmegaConf.structured(self.logger)),
+            "data": OmegaConf.to_container(OmegaConf.structured(self.data)),
+            "training": OmegaConf.to_container(OmegaConf.structured(self.training)),
+            "optimizer": OmegaConf.to_container(OmegaConf.structured(self.optimizer)),
+            "seed": self.seed,
+        }
 
 
 class ConfigManager:
@@ -142,7 +149,6 @@ class ConfigManager:
 
 if __name__ == "__main__":
     config_manager = ConfigManager()
-
     print("Generating default configuration files...")
     config_manager.generate_default_configs()
 

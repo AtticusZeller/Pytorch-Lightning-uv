@@ -74,3 +74,24 @@ def test_load_component_config(config_manager, config_path):
 def test_load_nonexistent_config(config_manager):
     with pytest.raises(FileNotFoundError):
         config_manager.load_config("nonexistent.yml")
+
+
+def test_config_as_dict(config_manager, config_path):
+    config_manager.generate_default_configs()
+    config = config_manager.load_config(config_path / "train.yml")
+    config_dict = config.as_dict()
+
+    assert isinstance(config_dict, dict)
+    assert "model" in config_dict
+    assert "logger" in config_dict
+    assert "data" in config_dict
+    assert "training" in config_dict
+    assert "optimizer" in config_dict
+    assert "seed" in config_dict
+    assert config_dict["seed"] == 42
+
+    # Verify dict contents match config object
+    assert config_dict["model"]["name"] == config.model.name
+    assert config_dict["optimizer"]["lr"] == config.optimizer.lr
+    assert config_dict["data"]["dataset"] == config.data.dataset
+    assert config_dict["training"]["max_epochs"] == config.training.max_epochs
