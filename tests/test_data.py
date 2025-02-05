@@ -73,49 +73,6 @@ def test_dataloader() -> None:
     assert test_labels.shape == (batch_size,)
 
 
-def test_mnist_datamodule() -> None:
-    # Initialize datamodule
-    transform_list = [to_kornia_image, to_tensor]
-    dm = MNISTDataModule(data_dir="./data", batch_size=32, transforms=transform_list)
-
-    # Test prepare_data
-    dm.prepare_data()
-
-    # Test setup for fit stage
-    dm.setup("fit")
-    assert hasattr(dm, "mnist_train")
-    assert hasattr(dm, "mnist_val")
-    assert len(dm.mnist_train) == 55000
-    assert len(dm.mnist_val) == 5000
-
-    # Test train dataloader
-    train_loader = dm.train_dataloader()
-    assert isinstance(train_loader, DataLoader)
-    batch = next(iter(train_loader))
-    assert len(batch) == 2  # (images, labels)
-    assert batch[0].shape == (32, 1, 28, 28)
-    assert batch[1].shape == (32,)
-
-    # Test val dataloader
-    val_loader = dm.val_dataloader()
-    assert isinstance(val_loader, DataLoader)
-    batch = next(iter(val_loader))
-    assert batch[0].shape == (32, 1, 28, 28)
-    assert batch[1].shape == (32,)
-
-    # Test setup for test stage
-    dm.setup("test")
-    assert hasattr(dm, "mnist_test")
-    assert len(dm.mnist_test) == 10000
-
-    # Test test dataloader
-    test_loader = dm.test_dataloader()
-    assert isinstance(test_loader, DataLoader)
-    batch = next(iter(test_loader))
-    assert batch[0].shape == (32, 1, 28, 28)
-    assert batch[1].shape == (32,)
-
-
 def test_to_tensor() -> None:
     # Test with kornia Image
     img_tensor = torch.randint(0, 255, (28, 28), dtype=torch.uint8)
@@ -152,3 +109,59 @@ def test_to_tensor() -> None:
     # Test invalid input
     with pytest.raises(ValueError):
         to_tensor("invalid input")
+
+
+def test_MNISTDataModule():
+    data_module = MNISTDataModule(
+        data_dir="./data", batch_size=32, transforms=[to_kornia_image, to_tensor]
+    )
+    data_module.prepare_data()
+    data_module.setup("fit")
+    data_module.setup("test")
+    train_loader = data_module.train_dataloader()
+    val_loader = data_module.val_dataloader()
+    test_loader = data_module.test_dataloader()
+    # Verify train loader properties and data
+    assert isinstance(train_loader, DataLoader)
+    assert len(train_loader.dataset) == 55000
+    for batch in train_loader:
+        images, labels = batch
+        assert images.shape[0] == min(32, len(images))
+        assert images.shape[1:] == (1, 28, 28)
+        assert images.dtype == torch.float32
+        assert labels.shape[0] == min(32, len(labels))
+        assert labels.dtype == torch.int64
+        assert torch.max(images) <= 1.0
+        assert torch.min(images) >= 0.0
+        assert torch.max(labels) < 10
+        assert torch.min(labels) >= 0
+
+    # Verify val loader properties and data
+    assert isinstance(val_loader, DataLoader)
+    assert len(val_loader.dataset) == 5000
+    for batch in val_loader:
+        images, labels = batch
+        assert images.shape[0] == min(32, len(images))
+        assert images.shape[1:] == (1, 28, 28)
+        assert images.dtype == torch.float32
+        assert labels.shape[0] == min(32, len(labels))
+        assert labels.dtype == torch.int64
+        assert torch.max(images) <= 1.0
+        assert torch.min(images) >= 0.0
+        assert torch.max(labels) < 10
+        assert torch.min(labels) >= 0
+
+    # Verify test loader properties and data
+    assert isinstance(test_loader, DataLoader)
+    assert len(test_loader.dataset) == 10000
+    for batch in test_loader:
+        images, labels = batch
+        assert images.shape[0] == min(32, len(images))
+        assert images.shape[1:] == (1, 28, 28)
+        assert images.dtype == torch.float32
+        assert labels.shape[0] == min(32, len(labels))
+        assert labels.dtype == torch.int64
+        assert torch.max(images) <= 1.0
+        assert torch.min(images) >= 0.0
+        assert torch.max(labels) < 10
+        assert torch.min(labels) >= 0
