@@ -13,17 +13,7 @@ from pytorch_lightning_uv.config import (
 )
 
 
-@pytest.fixture(scope="function")
-def config_path(tmp_path: Path) -> Path:
-    return tmp_path / "config"
-
-
-@pytest.fixture
-def config_manager(config_path: Path):
-    return ConfigManager(config_dir=config_path)
-
-
-def test_generate_default_configs(config_manager, config_path):
+def test_generate_default_configs(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
 
     # Check main config files exist
@@ -36,7 +26,7 @@ def test_generate_default_configs(config_manager, config_path):
         assert (config_path / component / "default.yml").exists()
 
 
-def test_load_full_train_config(config_manager, config_path):
+def test_load_full_train_config(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
     config = config_manager.load_config(config_path / "train.yml")
 
@@ -49,7 +39,7 @@ def test_load_full_train_config(config_manager, config_path):
     assert config.seed == 42
 
 
-def test_load_eval_config(config_manager, config_path):
+def test_load_eval_config(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
     config = config_manager.load_config(config_path / "eval.yml")
 
@@ -62,7 +52,7 @@ def test_load_eval_config(config_manager, config_path):
     assert config.seed == 42
 
 
-def test_load_component_config(config_manager, config_path):
+def test_load_component_config(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
     model_config = config_manager.load_config(config_path / "model/default.yml")
 
@@ -71,12 +61,12 @@ def test_load_component_config(config_manager, config_path):
     assert model_config.hidden_size == 512
 
 
-def test_load_nonexistent_config(config_manager):
+def test_load_nonexistent_config(config_manager: ConfigManager):
     with pytest.raises(FileNotFoundError):
         config_manager.load_config("nonexistent.yml")
 
 
-def test_config_as_dict(config_manager, config_path):
+def test_config_as_dict(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
     config = config_manager.load_config(config_path / "train.yml")
     config_dict = config.as_dict()
