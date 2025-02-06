@@ -12,8 +12,6 @@ from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 from torchvision.transforms.transforms import Compose as trans_compose
 
-from .transform import to_kornia_image, to_tensor
-
 
 class MNIST(VisionDataset):
     """`MNIST <http://yann.lecun.com/exdb/mnist/>` Dataset.
@@ -197,31 +195,3 @@ class MNISTDataModule(L.LightningDataModule):
         """load raw data or tokenize data"""
         MNIST(self.data_dir, train=True, download=True)
         MNIST(self.data_dir, train=False, download=True)
-
-
-# def calculate_stats(dataset):
-#     loader = DataLoader(dataset, batch_size=len(dataset))
-#     data = next(iter(loader))[0]
-#     return data.mean().item(), data.std().item()
-
-
-# if __name__ == "__main__":
-#     from ..config import ConfigManager, DataConfig
-
-#     config_manager = ConfigManager()
-#     data_config: DataConfig = config_manager.load_config(
-#         Path("./config/data/default.yml")
-#     )
-#     # Initialize data module
-#     data_module = MNISTDataModule(
-#         data_dir="./data",
-#         batch_size=data_config.batch_size,
-#         transforms=[to_kornia_image, to_tensor],
-#     )
-#     data_module.prepare_data()
-#     data_module.setup("fit")
-#     data_module.setup("test")
-
-#     print("训练集：", calculate_stats(data_module.mnist_train))
-#     print("验证集：", calculate_stats(data_module.mnist_val))
-#     print("测试集：", calculate_stats(data_module.mnist_test))

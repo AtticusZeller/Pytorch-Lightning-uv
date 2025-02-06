@@ -165,3 +165,15 @@ def test_MNISTDataModule():
         assert torch.min(images) >= 0.0
         assert torch.max(labels) < 10
         assert torch.min(labels) >= 0
+
+
+def test_mean_std() -> None:
+    transform_funcs = transforms.Compose([to_kornia_image, to_tensor])
+    train_dataset = MNIST(
+        root="./data", train=True, download=True, transform=transform_funcs
+    )
+    loader = DataLoader(train_dataset, batch_size=len(train_dataset))
+    data = next(iter(loader))[0]
+    mean, std = data.mean().item(), data.std().item()
+    print("mean:", mean)  # 0.13066047430038452
+    print("std:", std)  # 0.30810782313346863
