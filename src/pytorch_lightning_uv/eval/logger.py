@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import wandb
 from lightning.pytorch.loggers import WandbLogger
 
@@ -22,6 +24,7 @@ class LoggerManager:
         base_url: str = "https://wandb.atticux.me",
     ) -> None:
         config = config or {}
+        Path("./logs").mkdir(parents=True, exist_ok=True)
         self.logger = WandbLogger(
             project=project,
             entity=entity,
