@@ -4,9 +4,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..config import ConfigManager, DataConfig, LoggerConfig
-from ..data import MNISTDataModule, to_kornia_image, to_tensor
-from .logger import LoggerManager
+from pytorch_lightning_uv.config import ConfigManager, DataConfig, LoggerConfig
+from pytorch_lightning_uv.data import MNISTDataModule
+from pytorch_lightning_uv.data.transform import base_transform
+from pytorch_lightning_uv.eval.logger import LoggerManager
 
 
 def analyze_mnist_with_wandb():
@@ -31,7 +32,7 @@ def analyze_mnist_with_wandb():
     data_module = MNISTDataModule(
         data_dir="./data",
         batch_size=data_config.batch_size,
-        transforms=[to_kornia_image, to_tensor],
+        transforms=base_transform(),
     )
 
     # Prepare and setup data

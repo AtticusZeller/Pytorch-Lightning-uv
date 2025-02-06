@@ -1,11 +1,8 @@
-import numpy as np
 import torch
 import torchvision.transforms.v2 as v2
 from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
 from kornia.image.base import ColorSpace
-from torch import Tensor, is_tensor
-from torchvision import tv_tensors
-
+from torch import Tensor
 
 # def create_augmentation_pipeline(image_size=224) -> v2.Compose:
 #     """
@@ -40,33 +37,8 @@ from torchvision import tv_tensors
 #     return transforms
 
 
-def to_tensor(data: Image | np.ndarray | Tensor) -> Tensor:
-    """Convert image tensor within [0,1]
-
-    Parameters
-    ----------
-    img : Image | np.ndarray | Tensor
-
-    Returns
-    -------
-    Tensor: dtype = torch.float32,value within [0,1]
-    """
-    if isinstance(data, Image):
-        data = data.data
-
-    if isinstance(data, np.ndarray):
-        return torch.from_numpy(data).float().div(255)
-
-    if is_tensor(data):
-        if isinstance(data, torch.ByteTensor):
-            return data.float().div(255)
-        else:
-            return data
-    raise ValueError("Input should be either a kornia Image or a torch tensor")
-
-
-def to_kornia_image(img: Tensor) -> Image:
-    """Convert a torch tensor to a kornia Image.
+def reshape_image(img: Tensor) -> Tensor:
+    """Reshape image tensor to channels first
 
     Parameters
     ----------
@@ -76,10 +48,11 @@ def to_kornia_image(img: Tensor) -> Image:
     Returns
     -------
     Image
-        Kornia Image with shape (1, H, W)
+        Kornia Image Tensor with shape (C, H, W)
     """
-    # Add channel dimension
-    img_channels_first = img.unsqueeze(0)
+    if img.dim() == 2:
+        # Add channel dimension
+        img_channels_first = img.unsqueeze(0)
 
     # Define image layout
     layout = ImageLayout(
@@ -92,4 +65,18 @@ def to_kornia_image(img: Tensor) -> Image:
     pixel_format = PixelFormat(color_space=ColorSpace.GRAY, bit_depth=8)
 
     # Create kornia Image
-    return Image(img_channels_first, pixel_format, layout)
+    return Image(img_channels_first, pixel_format, layout).data
+
+
+def base_transform() -> v2.Compose:
+    return v2.Compose([reshape_image, v2.ToDtype(torch.float32, scale=True)])
+
+
+def train_transform() -> v2.Compose:
+    return v2.Compose(
+        [
+            reshape_image,
+            v2.ToDtype(torch.float32, scale=True),
+            v2.Normalize((0.1307,), (0.3081,)),
+        ]
+    )

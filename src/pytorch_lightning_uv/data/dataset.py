@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
-from torchvision.transforms.transforms import Compose as trans_compose
+from torchvision.transforms import v2 as v2
 
 
 class MNIST(VisionDataset):
@@ -155,15 +155,13 @@ class MNISTDataModule(L.LightningDataModule):
         self,
         data_dir: str | Path = "./data",
         batch_size: int = 32,
-        transforms: list[Callable] | None = None,
+        transforms: v2.Compose | None = None,
     ) -> None:
         super().__init__()
         self.data_dir = Path(data_dir)
         self.batch_size = batch_size
-        if transforms and isinstance(transforms, list):
-            self.transform = trans_compose(transforms)
-        else:
-            self.transform = None
+
+        self.transform = transforms
 
     def setup(self, stage: str):
         # Assign train/val datasets for use in dataloaders
