@@ -58,16 +58,6 @@ class Config:
     optimizer: OptimizerConfig | None = None
     seed: int = 42
 
-    def as_dict(self):
-        return {
-            "model": OmegaConf.to_container(OmegaConf.structured(self.model)),
-            "logger": OmegaConf.to_container(OmegaConf.structured(self.logger)),
-            "data": OmegaConf.to_container(OmegaConf.structured(self.data)),
-            "training": OmegaConf.to_container(OmegaConf.structured(self.training)),
-            "optimizer": OmegaConf.to_container(OmegaConf.structured(self.optimizer)),
-            "seed": self.seed,
-        }
-
 
 class ConfigManager:
     def __init__(self, config_dir: str | Path = "./config") -> None:

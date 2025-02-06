@@ -3,6 +3,16 @@ from lightning.pytorch.loggers import WandbLogger
 
 
 class LoggerManager:
+    """
+    Initialize the Weights & Biases logging.
+    ```bash
+    wandb login --relogin --host=https://wandb.atticux.me
+    ```
+    Ref:
+        1. https://docs.wandb.ai/guides/integrations/lightning/
+        2. https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.loggers.wandb.html#module-lightning.pytorch.loggers.wandb
+    """
+
     def __init__(
         self,
         run_name: str,
@@ -11,14 +21,6 @@ class LoggerManager:
         config: dict | None = None,
         base_url: str = "https://wandb.atticux.me",
     ) -> None:
-        """
-        Initialize the Weights & Biases logging.
-        use wandb login with api key https://wandb.ai/authorize
-        then wandb login --relogin
-        wandb login --cloud
-        Ref: 1. https://docs.wandb.ai/guides/integrations/lightning/
-             2. https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.loggers.wandb.html#module-lightning.pytorch.loggers.wandb
-        """
         config = config or {}
         self.logger = WandbLogger(
             project=project,

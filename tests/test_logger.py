@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 import wandb
 
 from pytorch_lightning_uv.config import Config
@@ -10,7 +12,7 @@ def test_wandb_logger_init(train_config: Config, cleanup_wandb: None) -> None:
     run_name = "test_run"
     entity = train_config.logger.entity
     project = train_config.logger.project
-    test_config = train_config.as_dict()
+    test_config = asdict(train_config)
     test_config.pop("logger")
 
     # Initialize logger with config

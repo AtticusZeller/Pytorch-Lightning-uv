@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from pathlib import Path
 
 import pytest
@@ -69,7 +70,7 @@ def test_load_nonexistent_config(config_manager: ConfigManager):
 def test_config_as_dict(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
     config = config_manager.load_config(config_path / "train.yml")
-    config_dict = config.as_dict()
+    config_dict = asdict(config)
 
     assert isinstance(config_dict, dict)
     assert "model" in config_dict
