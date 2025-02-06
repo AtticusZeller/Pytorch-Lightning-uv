@@ -1,6 +1,9 @@
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
+import wandb
 
 from pytorch_lightning_uv.config import Config, ConfigManager
 
@@ -25,3 +28,14 @@ def train_config(config_manager: ConfigManager, config_path: Path) -> Config:
 def eval_config(config_manager: ConfigManager, config_path: Path) -> Config:
     config_manager.generate_default_configs()
     return config_manager.load_config(config_path / "eval.yml")
+
+
+@pytest.fixture
+def cleanup_wandb(eval_config: Config) -> Generator[None, Any, None]:
+    yield
+    # Delete test runs after all tests
+    api = wandb.Api()
+    runs = api.runs(f"{eval_config.logger.entity}/{eval_config.logger.project}")
+    for run in runs:
+        if run.name.startswith("test_"):
+            run.delete()
