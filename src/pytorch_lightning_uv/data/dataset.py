@@ -4,71 +4,15 @@ from typing import Any
 from urllib.error import URLError
 
 import lightning as L
-import numpy as np
 import torch
-from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
-from kornia.image.base import ColorSpace
-from torch import Tensor, is_tensor
+from torch import Tensor
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 from torchvision.transforms.transforms import Compose as trans_compose
 
-
-def to_kornia_image(img: Tensor) -> Image:
-    """Convert a torch tensor to a kornia Image.
-
-    Parameters
-    ----------
-    img : Tensor
-        Input tensor with shape (H, W)
-
-    Returns
-    -------
-    Image
-        Kornia Image with shape (1, H, W)
-    """
-    # Add channel dimension
-    img_channels_first = img.unsqueeze(0)
-
-    # Define image layout
-    layout = ImageLayout(
-        image_size=ImageSize(28, 28),
-        channels=1,
-        channels_order=ChannelsOrder.CHANNELS_FIRST,
-    )
-
-    # Define pixel format
-    pixel_format = PixelFormat(color_space=ColorSpace.GRAY, bit_depth=8)
-
-    # Create kornia Image
-    return Image(img_channels_first, pixel_format, layout)
-
-
-def to_tensor(data: Image | np.ndarray | Tensor) -> Tensor:
-    """Convert image tensor within [0,1]
-
-    Parameters
-    ----------
-    img : Image | np.ndarray | Tensor
-
-    Returns
-    -------
-    Tensor: dtype = torch.float32,value within [0,1]
-    """
-    if isinstance(data, Image):
-        data = data.data
-
-    if isinstance(data, np.ndarray):
-        return torch.from_numpy(data).float().div(255)
-
-    if is_tensor(data):
-        if isinstance(data, torch.ByteTensor):
-            return data.float().div(255)
-        else:
-            return data
-    raise ValueError("Input should be either a kornia Image or a torch tensor")
+from .transform import to_kornia_image, to_tensor
 
 
 class MNIST(VisionDataset):
@@ -220,6 +164,8 @@ class MNISTDataModule(L.LightningDataModule):
         self.batch_size = batch_size
         if transforms and isinstance(transforms, list):
             self.transform = trans_compose(transforms)
+        else:
+            self.transform = None
 
     def setup(self, stage: str):
         # Assign train/val datasets for use in dataloaders
@@ -251,3 +197,31 @@ class MNISTDataModule(L.LightningDataModule):
         """load raw data or tokenize data"""
         MNIST(self.data_dir, train=True, download=True)
         MNIST(self.data_dir, train=False, download=True)
+
+
+# def calculate_stats(dataset):
+#     loader = DataLoader(dataset, batch_size=len(dataset))
+#     data = next(iter(loader))[0]
+#     return data.mean().item(), data.std().item()
+
+
+# if __name__ == "__main__":
+#     from ..config import ConfigManager, DataConfig
+
+#     config_manager = ConfigManager()
+#     data_config: DataConfig = config_manager.load_config(
+#         Path("./config/data/default.yml")
+#     )
+#     # Initialize data module
+#     data_module = MNISTDataModule(
+#         data_dir="./data",
+#         batch_size=data_config.batch_size,
+#         transforms=[to_kornia_image, to_tensor],
+#     )
+#     data_module.prepare_data()
+#     data_module.setup("fit")
+#     data_module.setup("test")
+
+#     print("训练集：", calculate_stats(data_module.mnist_train))
+#     print("验证集：", calculate_stats(data_module.mnist_val))
+#     print("测试集：", calculate_stats(data_module.mnist_test))
