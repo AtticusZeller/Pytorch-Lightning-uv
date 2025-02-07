@@ -21,12 +21,12 @@ def test_wandb_logger_init(train_config: Config, cleanup_wandb: None) -> None:
     )
 
     # Verify wandb run is initialized correctly
-    assert logger_manager.logger.experiment is not None
-    assert logger_manager.logger.experiment.name == run_name
-    assert logger_manager.logger.experiment.project == project
-    assert logger_manager.logger.experiment.entity == entity
+    assert logger_manager.experiment is not None
+    assert logger_manager.experiment.name == run_name
+    assert logger_manager.experiment.project == project
+    assert logger_manager.experiment.entity == entity
     assert (
-        logger_manager.logger.experiment.config["optimizer"]["lr"]
+        logger_manager.experiment.config["optimizer"]["lr"]
         == test_config["optimizer"]["lr"]
     )
     # clean

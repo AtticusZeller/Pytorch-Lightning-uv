@@ -68,11 +68,11 @@ def analyze_mnist_with_wandb():
         plt.ylabel("Count")
 
         # Log to wandb
-        logger_manager.logger.log_image(f"distribution/{name}", [plt.gcf()])
+        logger_manager.log_image(f"distribution/{name}", [plt.gcf()])
         plt.close()
 
         # Log as table
-        logger_manager.logger.log_table(
+        logger_manager.log_table(
             key=f"stats/{name}_distribution",
             columns=["digit", "count"],
             data=[[i, count] for i, count in enumerate(label_counts)],
@@ -97,14 +97,14 @@ def analyze_mnist_with_wandb():
             plt.tight_layout()
 
             # Log to wandb
-            logger_manager.logger.log_image(
+            logger_manager.log_image(
                 "samples/grid", [plt.gcf()], caption=["Sample MNIST digits"]
             )
             plt.close()
 
             # Also log individual images with matching number of captions
             images_to_log = [img[0].numpy() for img in sample_images]
-            logger_manager.logger.log_image(
+            logger_manager.log_image(
                 "samples/individual",
                 images_to_log,
                 caption=[f"Digit {label.item()}" for label in sample_labels],

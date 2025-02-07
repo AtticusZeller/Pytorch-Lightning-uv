@@ -2,9 +2,10 @@ from pathlib import Path
 
 import wandb
 from lightning.pytorch.loggers import WandbLogger
+from rich.pretty import pprint
 
 
-class LoggerManager:
+class LoggerManager(WandbLogger):
     """
     Initialize the Weights & Biases logging.
     ```bash
@@ -25,7 +26,7 @@ class LoggerManager:
     ) -> None:
         config = config or {}
         Path("./logs").mkdir(parents=True, exist_ok=True)
-        self.logger = WandbLogger(
+        super().__init__(
             project=project,
             entity=entity,
             name=run_name,
@@ -35,7 +36,8 @@ class LoggerManager:
             settings=wandb.Settings(base_url=base_url),
         )
 
-        print(f"Run name: {run_name}:config: {config}")
+        print(f"Run name: {run_name}\nconfig:")
+        pprint(config)
 
     # TODO： add checkpoint logger
     # TODO: logger image
