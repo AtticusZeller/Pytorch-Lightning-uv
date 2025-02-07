@@ -176,7 +176,7 @@ class MNISTDataModule(L.LightningDataModule):
 
     def train_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer fit() method uses."""
-        return DataLoader(self.mnist_train, batch_size=self.batch_size)
+        return DataLoader(self.mnist_train, batch_size=self.batch_size, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer fit() and validate() methods uses."""
