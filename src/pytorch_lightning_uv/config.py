@@ -39,7 +39,6 @@ class TrainingConfig:
 @dataclass
 class LoggerConfig:
     run_name: str | None = None
-    config: dict | None = None
     entity: str = "atticux"  # set to name of your wandb team
     project: str = "pytorch-lightning-uv"
 
@@ -102,7 +101,7 @@ class ConfigManager:
         config_path = Path(config_path)
         if not config_path.exists() or not config_path.is_file():
             raise FileNotFoundError(f"Config file not found: {config_path}")
-
+        print(f"Loading config from: {config_path}")
         conf = OmegaConf.to_container(OmegaConf.load(config_path), resolve=True)
         if config_path.parent == self.config_dir:
             # load all config
