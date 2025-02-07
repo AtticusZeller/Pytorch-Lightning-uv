@@ -1,7 +1,4 @@
 data:
-  augmentation:
-  - random_crop
-  - random_flip
+  augmentation: null
   batch_size: 128
   dataset: MNIST
-  num_workers: 4

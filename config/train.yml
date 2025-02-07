@@ -2,5 +2,4 @@ data: data/default.yml
 logger: logger/default.yml
 model: model/default.yml
 optimizer: optimizer/default.yml
-seed: 42
 training: training/default.yml

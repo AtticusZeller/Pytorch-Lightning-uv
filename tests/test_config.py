@@ -37,7 +37,6 @@ def test_load_full_train_config(config_manager: ConfigManager, config_path: Path
     assert isinstance(config.data, DataConfig)
     assert isinstance(config.training, TrainingConfig)
     assert isinstance(config.logger, LoggerConfig)
-    assert config.seed == 42
 
 
 def test_load_eval_config(config_manager: ConfigManager, config_path: Path):
@@ -50,7 +49,6 @@ def test_load_eval_config(config_manager: ConfigManager, config_path: Path):
     assert isinstance(config.logger, LoggerConfig)
     assert config.optimizer is None
     assert config.training is None
-    assert config.seed == 42
 
 
 def test_load_component_config(config_manager: ConfigManager, config_path: Path):
@@ -58,8 +56,7 @@ def test_load_component_config(config_manager: ConfigManager, config_path: Path)
     model_config = config_manager.load_config(config_path / "model/default.yml")
 
     assert isinstance(model_config, ModelConfig)
-    assert model_config.name == "resnet18"
-    assert model_config.hidden_size == 512
+    assert model_config.name == "MLP"
 
 
 def test_load_nonexistent_config(config_manager: ConfigManager):
@@ -78,8 +75,6 @@ def test_config_as_dict(config_manager: ConfigManager, config_path: Path):
     assert "data" in config_dict
     assert "training" in config_dict
     assert "optimizer" in config_dict
-    assert "seed" in config_dict
-    assert config_dict["seed"] == 42
 
     # Verify dict contents match config object
     assert config_dict["model"]["name"] == config.model.name

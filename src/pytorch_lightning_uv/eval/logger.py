@@ -31,6 +31,7 @@ class LoggerManager:
             name=run_name,
             config=config,
             save_dir="./logs",
+            log_model="all",
             # offline=True,
             settings=wandb.Settings(base_url=base_url),
         )

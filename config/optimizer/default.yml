@@ -1,7 +1,3 @@
 optimizer:
-  betas:
-  - 0.9
-  - 0.999
   lr: 0.001
   name: adam
-  weight_decay: 0.0001

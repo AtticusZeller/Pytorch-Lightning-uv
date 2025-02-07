@@ -1,5 +1,5 @@
 # config.py
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
@@ -8,37 +8,32 @@ from omegaconf import OmegaConf
 
 @dataclass
 class ModelConfig:
-    name: str = "resnet18"
-    hidden_size: int = 512
-    num_layers: int = 18
-    dropout: float = 0.1
+    name: str = "MLP"
+    n_layer_1: int = 128
+    n_layer_2: int = 256
+    dropout: float | None = None
     activation: str = "relu"
 
 
 @dataclass
 class OptimizerConfig:
     name: str = "adam"
-    lr: float = 0.001
-    weight_decay: float = 0.0001
-    betas: tuple = (0.9, 0.999)
+    lr: float = 1e-3
 
 
 @dataclass
 class DataConfig:
     dataset: str = "MNIST"
     batch_size: int = 128
-    num_workers: int = 4
-    augmentation: list[str] = field(
-        default_factory=lambda: ["random_crop", "random_flip"]
-    )
+    augmentation: list[str] | None = None
 
 
 @dataclass
 class TrainingConfig:
-    max_epochs: int = 10
-    gradient_clip_val: float | None = 1.0
-    accumulate_grad_batches: int = 1
-    precision: int = 32
+    max_epochs: int = 50
+    gradient_clip_val: float | None = None
+    accumulate_grad_batches: int | None = None
+    precision: int | None = None
 
 
 @dataclass
@@ -56,7 +51,6 @@ class Config:
     data: DataConfig
     training: TrainingConfig | None = None
     optimizer: OptimizerConfig | None = None
-    seed: int = 42
 
 
 class ConfigManager:
@@ -85,7 +79,6 @@ class ConfigManager:
 
         # basic train config
         base_config = {
-            "seed": Config.seed,
             "model": "model/default.yml",
             "optimizer": "optimizer/default.yml",
             "data": "data/default.yml",
@@ -96,7 +89,6 @@ class ConfigManager:
 
         # basic eval config
         base_config = {
-            "seed": Config.seed,
             "model": "model/default.yml",
             "data": "data/default.yml",
             "logger": "logger/default.yml",
