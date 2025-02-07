@@ -6,6 +6,13 @@ import pytest
 import wandb
 
 from pytorch_lightning_uv.config import Config, ConfigManager
+from pytorch_lightning_uv.utils import set_random_seed
+
+
+@pytest.fixture(scope="session")
+def set_seed() -> Generator[None, Any, None]:
+    set_random_seed()
+    yield
 
 
 @pytest.fixture(scope="function")

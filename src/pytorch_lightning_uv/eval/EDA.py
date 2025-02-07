@@ -8,6 +8,7 @@ from pytorch_lightning_uv.config import ConfigManager, DataConfig, LoggerConfig
 from pytorch_lightning_uv.data import MNISTDataModule
 from pytorch_lightning_uv.data.transform import base_transform
 from pytorch_lightning_uv.eval.logger import LoggerManager
+from pytorch_lightning_uv.utils import set_random_seed
 
 
 def analyze_mnist_with_wandb():
@@ -112,4 +113,5 @@ def analyze_mnist_with_wandb():
 
 
 if __name__ == "__main__":
+    set_random_seed()
     analyze_mnist_with_wandb()

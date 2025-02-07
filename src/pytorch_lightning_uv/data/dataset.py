@@ -4,7 +4,6 @@ from typing import Any
 from urllib.error import URLError
 
 import lightning as L
-import torch
 from torch import Tensor
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import VisionDataset
@@ -167,9 +166,7 @@ class MNISTDataModule(L.LightningDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             mnist_full = MNIST(self.data_dir, train=True, transform=self.transform)
-            self.mnist_train, self.mnist_val = random_split(
-                mnist_full, [55000, 5000], generator=torch.Generator().manual_seed(42)
-            )
+            self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
 
         # Assign test dataset for use in dataloader(s)
         if stage == "test":
