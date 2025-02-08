@@ -3,6 +3,7 @@ from typing import Self
 
 import wandb
 from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.utilities.types import _EVALUATE_OUTPUT
 from rich.pretty import pprint
 
 
@@ -13,8 +14,9 @@ class LoggerManager(WandbLogger):
     wandb login --relogin --host=https://wandb.atticux.me
     ```
     Ref:
-        1. https://docs.wandb.ai/guides/integrations/lightning/
-        2. https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.loggers.wandb.html#module-lightning.pytorch.loggers.wandb
+        1. https://docs.wandb.ai/ref/python/init/
+        2. https://docs.wandb.ai/guides/integrations/lightning/
+        3. https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.loggers.wandb.html#module-lightning.pytorch.loggers.wandb
     """
 
     def __init__(
@@ -22,10 +24,11 @@ class LoggerManager(WandbLogger):
         run_name: str,
         entity: str,
         project: str,
-        config: dict | None = None,
+        id: str | None = None,
         log_model: bool = True,
         job_type: str = "train",
         base_url: str = "https://wandb.atticux.me",
+        config: dict | None = None,
     ) -> None:
         config = config or {}
         Path("./logs").mkdir(parents=True, exist_ok=True)
@@ -34,6 +37,10 @@ class LoggerManager(WandbLogger):
             entity=entity,
             name=run_name,
             job_type=job_type,
+            id=id,
+            resume="must"
+            if id is not None
+            else "never",  # resume run if id is provided
             config=config,
             save_dir="./logs",
             log_model=log_model,  # log model artifacts while Trainer callbacks
@@ -64,6 +71,12 @@ class LoggerManager(WandbLogger):
         if self.job_type == "train":
             print("\nTraining completed! To test this model, use:")
             print(f"Run ID: {self.version}")
+
+    def log_test_results(self, metrics: _EVALUATE_OUTPUT) -> None:
+        """Log test results to wandb."""
+        columns = ["Metric", "Value"]
+        data = [[k, v] for k, v in metrics[0].items()]
+        self.log_text(key="test_results", columns=columns, data=data)
 
     def load_best_model(self, run_id: str) -> Path:
         """Load the best model from a specific run ID."""
