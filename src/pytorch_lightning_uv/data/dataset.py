@@ -177,16 +177,31 @@ class MNISTDataModule(L.LightningDataModule):
     def train_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer fit() method uses."""
         return DataLoader(
-            self.mnist_train, batch_size=self.batch_size, shuffle=True, num_workers=16
+            self.mnist_train,
+            batch_size=self.batch_size,
+            pin_memory=True,
+            shuffle=True,
+            num_workers=16,
+            persistent_workers=True,
+            prefetch_factor=20,
         )
 
     def val_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer fit() and validate() methods uses."""
-        return DataLoader(self.mnist_val, batch_size=self.batch_size, num_workers=16)
+        return DataLoader(
+            self.mnist_val,
+            batch_size=self.batch_size,
+            pin_memory=True,
+            num_workers=16,
+            persistent_workers=True,
+            prefetch_factor=20,
+        )
 
     def test_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer test() method uses."""
-        return DataLoader(self.mnist_test, batch_size=self.batch_size, num_workers=16)
+        return DataLoader(
+            self.mnist_test, pin_memory=True, batch_size=self.batch_size, num_workers=16
+        )
 
     def prepare_data(self) -> None:
         """load raw data or tokenize data"""
