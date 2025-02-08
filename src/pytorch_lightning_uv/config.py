@@ -4,6 +4,7 @@ from pathlib import Path
 
 import yaml
 from omegaconf import OmegaConf
+from rich import print
 
 
 @dataclass
