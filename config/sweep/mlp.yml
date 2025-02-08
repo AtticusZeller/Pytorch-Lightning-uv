@@ -1,0 +1,15 @@
+method: bayes  
+metric:
+  name: val_accuracy  
+  goal: maximize  
+parameters:
+  n_layer_1:
+    values: [128, 256, 512]
+  n_layer_2:
+    values: [128, 256, 512, 1024]
+  lr:
+    distribution: log_uniform_values
+    min: 0.00005
+    max: 0.001
+  batch_size:
+    values: [32, 64, 128, 256]

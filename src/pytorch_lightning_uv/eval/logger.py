@@ -1,10 +1,20 @@
+from dataclasses import asdict
 from pathlib import Path
 from typing import Self
 
-import wandb
+import yaml
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.utilities.types import _EVALUATE_OUTPUT
 from rich.pretty import pprint
+
+import wandb
+from pytorch_lightning_uv.config import (
+    Config,
+    DataConfig,
+    ModelConfig,
+    OptimizerConfig,
+    TrainingConfig,
+)
 
 
 class LoggerManager(WandbLogger):
@@ -95,3 +105,29 @@ class LoggerManager(WandbLogger):
         """Override watch method to keep track of watched models."""
         super().watch(model, log=log, log_freq=log_freq, log_graph=log_graph)
         self._watched_models.append(model)
+
+    @classmethod
+    def init_sweep(cls, sweep_config_path: Path, project: str, entity: str) -> str:
+        """Initialize sweep from config file"""
+        with open(sweep_config_path) as f:
+            sweep_config = yaml.safe_load(f)
+
+        # 创建sweep
+        sweep_id = wandb.sweep(sweep_config, project=project, entity=entity)
+        return sweep_id
+
+    def update_config_with_sweep(self, config: Config) -> Config:
+        """Update config with sweep values if in sweep mode"""
+
+        sweep_config = self.experiment.config.as_dict()
+
+        for field in asdict(config):
+            sub_config: ModelConfig | OptimizerConfig | DataConfig | TrainingConfig = (
+                getattr(config, field)
+            )
+            for key in asdict(sub_config):
+                if key in sweep_config:
+                    setattr(sub_config, key, sweep_config[key])
+                    self.experiment.config[field][key] = sweep_config[key]
+
+        return config
