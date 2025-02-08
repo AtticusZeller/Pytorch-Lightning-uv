@@ -16,6 +16,34 @@
       "type": "debugpy"
     },
     {
+      "args": [
+        "-c",
+        "config/train_mlp.yml",
+        "--train"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "name": "Train MLP",
+      "program": "${workspaceFolder}/src/pytorch_lightning_uv/main.py",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "-c",
+        "config/train_mlp.yml",
+        "--sweep",
+        "--sweep-config",
+        "config/sweep/mlp.yml"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "name": "Sweep MLP",
+      "program": "${workspaceFolder}/src/pytorch_lightning_uv/main.py",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
       "console": "integratedTerminal",
       "justMyCode": true,
       "name": "Python: Debug Tests",
