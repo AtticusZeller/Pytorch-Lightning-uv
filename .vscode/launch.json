@@ -1,6 +1,21 @@
 {
   "configurations": [
     {
+      "args": [
+        "-c",
+        "config/train_mlp.yml",
+        "--eval",
+        "--run-id",
+        "fv8hy5jd"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "name": "Evaluation MLP",
+      "program": "${workspaceFolder}/src/pytorch_lightning_uv/main.py",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
       "console": "integratedTerminal",
       "justMyCode": true,
       "name": "Python: Debug Tests",
