@@ -1,0 +1,5 @@
+data: data/default.yml
+logger: logger/mlp.yml
+model: model/mlp.yml
+optimizer: optimizer/default.yml
+training: training/mlp.yml

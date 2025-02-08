@@ -1,0 +1,5 @@
+training:
+  accumulate_grad_batches: null
+  gradient_clip_val: null
+  max_epochs: 25
+  precision: null
