@@ -181,7 +181,7 @@ class MNISTDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             pin_memory=True,
             shuffle=True,
-            num_workers=16,
+            num_workers=15,
             persistent_workers=True,
             prefetch_factor=20,
         )
@@ -192,7 +192,7 @@ class MNISTDataModule(L.LightningDataModule):
             self.mnist_val,
             batch_size=self.batch_size,
             pin_memory=True,
-            num_workers=16,
+            num_workers=15,
             persistent_workers=True,
             prefetch_factor=20,
         )
@@ -200,7 +200,7 @@ class MNISTDataModule(L.LightningDataModule):
     def test_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer test() method uses."""
         return DataLoader(
-            self.mnist_test, pin_memory=True, batch_size=self.batch_size, num_workers=16
+            self.mnist_test, pin_memory=True, batch_size=self.batch_size, num_workers=15
         )
 
     def prepare_data(self) -> None:
