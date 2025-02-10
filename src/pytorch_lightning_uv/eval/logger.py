@@ -7,6 +7,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from rich import print
 from rich.pretty import pprint
+from torch import nn
 
 import wandb
 from pytorch_lightning_uv.config import (
@@ -35,11 +36,11 @@ class LoggerManager(WandbLogger):
         run_name: str,
         entity: str,
         project: str,
+        config: Config,
         id: str | None = None,
         log_model: bool = True,
         job_type: str = "train",
         base_url: str = "https://wandb.atticux.me",
-        config: Config | None = None,
     ) -> None:
         Path("./logs").mkdir(parents=True, exist_ok=True)
         super().__init__(
@@ -69,13 +70,13 @@ class LoggerManager(WandbLogger):
 
         pprint(asdict(config))
 
-        self._watched_models = []
+        self._watched_models: list[nn.Module] = []
 
     def __enter__(self) -> Self:
         """Enter the context manager."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # type: ignore
         """Exit the context manager.
 
         Will automatically unwatch all watched models and finish the wandb run.
@@ -98,10 +99,9 @@ class LoggerManager(WandbLogger):
             use_artifact=True,  # link current run to the artifact
             save_dir=f"./artifacts/{run_id}",
         )
-        model_path = Path(model_dir) / "model.ckpt"
-        if not model_path.exists():
+        if model_dir is None or not Path(model_dir).joinpath("model.ckpt").exists():
             raise FileNotFoundError(f"Model-{run_id} not found.")
-        return model_path
+        return Path(model_dir) / "model.ckpt"
 
     def upload_best_model(
         self, monitor: str = "val_accuracy", mode: str = "max"
@@ -117,7 +117,13 @@ class LoggerManager(WandbLogger):
         )
         self.after_save_checkpoint(checkpoint_callback)
 
-    def watch(self, model, log="all", log_freq=100, log_graph=False) -> None:
+    def watch(
+        self,
+        model: nn.Module,
+        log: str | None = "all",
+        log_freq: int = 100,
+        log_graph: bool = False,
+    ) -> None:
         """Override watch method to keep track of watched models."""
         super().watch(model, log=log, log_freq=log_freq, log_graph=log_graph)
         self._watched_models.append(model)

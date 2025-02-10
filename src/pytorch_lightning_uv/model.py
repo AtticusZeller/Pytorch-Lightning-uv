@@ -1,5 +1,6 @@
 import lightning.pytorch as pl
 import torch
+from torch import Tensor
 from torch.nn import CrossEntropyLoss, Linear, functional as F
 from torch.optim import Adam
 from torchmetrics.functional import accuracy
@@ -10,7 +11,13 @@ class MNIST_MLP(pl.LightningModule):
     Ref: https://colab.research.google.com/github/wandb/examples/blob/master/colabs/pytorch-lightning/Optimize_Pytorch_Lightning_models_with_Weights_%26_Biases.ipynb#scrollTo=gzaiGUAz1saI
     """
 
-    def __init__(self, n_classes=10, n_layer_1=128, n_layer_2=256, lr=1e-3) -> None:
+    def __init__(
+        self,
+        n_classes: int = 10,
+        n_layer_1: int = 128,
+        n_layer_2: int = 256,
+        lr: float = 1e-3,
+    ) -> None:
         super().__init__()
 
         # mnist images are (1, 28, 28) (channels, width, height)
@@ -27,7 +34,7 @@ class MNIST_MLP(pl.LightningModule):
         # save hyper-parameters to self.hparams (auto-logged by W&B)
         self.save_hyperparameters()
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         batch_size, channels, width, height = x.size()
 
         # (b, 1, 28, 28) -> (b, 1*28*28)
@@ -42,7 +49,7 @@ class MNIST_MLP(pl.LightningModule):
 
         return x
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> Tensor:
         """needs to return a loss from a single batch"""
         _, loss, acc = self._get_preds_loss_accuracy(batch)
 
@@ -52,7 +59,7 @@ class MNIST_MLP(pl.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx) -> torch.Tensor:
+    def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> Tensor:
         """used for logging metrics"""
         preds, loss, acc = self._get_preds_loss_accuracy(batch)
 
@@ -63,7 +70,7 @@ class MNIST_MLP(pl.LightningModule):
         # Let's return preds to use it in a custom callback
         return preds
 
-    def test_step(self, batch, batch_idx) -> None:
+    def test_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         """used for logging metrics"""
         _, loss, acc = self._get_preds_loss_accuracy(batch)
 
@@ -71,11 +78,13 @@ class MNIST_MLP(pl.LightningModule):
         self.log("test_loss", loss)
         self.log("test_accuracy", acc)
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Adam:
         """defines model optimizer"""
         return Adam(self.parameters(), lr=self.lr)
 
-    def _get_preds_loss_accuracy(self, batch):
+    def _get_preds_loss_accuracy(
+        self, batch: tuple[Tensor, Tensor]
+    ) -> tuple[Tensor, Tensor, Tensor]:
         """convenience function since train/valid/test steps are similar"""
         x, y = batch
         logits = self(x)
