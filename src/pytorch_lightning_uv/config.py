@@ -102,7 +102,7 @@ class ConfigManager:
         config_path = Path(config_path)
         if not config_path.exists() or not config_path.is_file():
             raise FileNotFoundError(f"Config file not found: {config_path}")
-        print(f"Loading config from: {config_path}")
+        print(f"Loading config from: [bold cyan]{config_path}[/bold cyan]")
         conf = OmegaConf.to_container(OmegaConf.load(config_path), resolve=True)
         if config_path.parent == self.config_dir:
             # load all config
