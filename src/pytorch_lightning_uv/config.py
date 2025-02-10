@@ -1,6 +1,7 @@
 # config.py
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any
 
 import yaml
 from rich import print
@@ -107,12 +108,12 @@ class ConfigManager:
             raise ValueError(f"Invalid config file: {config_path}")
 
     @staticmethod
-    def _save_config(config: dict[str, str], save_path: Path) -> None:
+    def _save_config(config: dict[str, Any], save_path: Path) -> None:
         with open(save_path, "w") as f:
             yaml.dump(config, f, default_flow_style=False)
 
     @staticmethod
-    def _load_config(config_path: Path) -> dict:
+    def _load_config(config_path: Path) -> dict[str, Any]:
         with open(config_path) as f:
             return yaml.safe_load(f)
 
