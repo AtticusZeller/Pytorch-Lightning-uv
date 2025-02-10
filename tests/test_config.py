@@ -19,7 +19,6 @@ def test_generate_default_configs(config_manager: ConfigManager, config_path: Pa
 
     # Check main config files exist
     assert (config_path / "train.yml").exists()
-    assert (config_path / "eval.yml").exists()
 
     # Check component directories and configs exist
     for component in ["model", "optimizer", "data", "training", "logger"]:
@@ -27,7 +26,7 @@ def test_generate_default_configs(config_manager: ConfigManager, config_path: Pa
         assert (config_path / component / "default.yml").exists()
 
 
-def test_load_full_train_config(config_manager: ConfigManager, config_path: Path):
+def test_load_config(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
     config = config_manager.load_config(config_path / "train.yml")
 
@@ -37,26 +36,6 @@ def test_load_full_train_config(config_manager: ConfigManager, config_path: Path
     assert isinstance(config.data, DataConfig)
     assert isinstance(config.training, TrainingConfig)
     assert isinstance(config.logger, LoggerConfig)
-
-
-def test_load_eval_config(config_manager: ConfigManager, config_path: Path):
-    config_manager.generate_default_configs()
-    config = config_manager.load_config(config_path / "eval.yml")
-
-    assert isinstance(config, Config)
-    assert isinstance(config.model, ModelConfig)
-    assert isinstance(config.data, DataConfig)
-    assert isinstance(config.logger, LoggerConfig)
-    assert config.optimizer is None
-    assert config.training is None
-
-
-def test_load_component_config(config_manager: ConfigManager, config_path: Path):
-    config_manager.generate_default_configs()
-    model_config = config_manager.load_config(config_path / "model/default.yml")
-
-    assert isinstance(model_config, ModelConfig)
-    assert model_config.name == "MLP"
 
 
 def test_load_nonexistent_config(config_manager: ConfigManager):
