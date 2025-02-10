@@ -60,17 +60,14 @@ class LoggerManager(WandbLogger):
         )
         self.entity = entity
         self.job_type = job_type
-
-        if config is not None:
-            self.config = config
-
-            if self.sweeping:
-                # update from sweep
-                self._update_config_with_sweep(config)
-
-        pprint(asdict(config))
-
+        self.config = config
         self._watched_models: list[nn.Module] = []
+
+        if self.sweeping:
+            # update from sweep
+            self._update_config_with_sweep(config)
+        # actual runtime config
+        pprint(self.experiment.config.as_dict())
 
     def __enter__(self) -> Self:
         """Enter the context manager."""
