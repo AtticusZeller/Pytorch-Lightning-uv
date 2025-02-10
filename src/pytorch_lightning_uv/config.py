@@ -12,7 +12,7 @@ class ModelConfig:
     name: str = "MLP"
     n_layer_1: int = 128
     n_layer_2: int = 256
-    dropout: float | None = None
+    dropout: float = 0.2
     activation: str = "relu"
 
 

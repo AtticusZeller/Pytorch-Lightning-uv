@@ -46,6 +46,7 @@ def training(config_path: Path) -> None:
             n_layer_1=config.model.n_layer_1,
             n_layer_2=config.model.n_layer_2,
             lr=config.optimizer.lr,
+            dropout_rate=config.model.dropout,
         )
         # log model ckpt and gradients
         if not logger.sweeping:
