@@ -2,50 +2,23 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from torch import Tensor
+from torch.utils.data import DataLoader
 
-from pytorch_lightning_uv.config import ConfigManager, DataConfig, LoggerConfig
+from pytorch_lightning_uv.config import ConfigManager
 from pytorch_lightning_uv.data import MNISTDataModule
 from pytorch_lightning_uv.data.transform import base_transform
 from pytorch_lightning_uv.eval.logger import LoggerManager
 from pytorch_lightning_uv.utils import set_random_seed
 
 
-def analyze_mnist_with_wandb():
-    """Analyze MNIST dataset using Weights & Biases logging"""
-    config_manager = ConfigManager()
-    data_config: DataConfig = config_manager.load_config(
-        Path("./config/data/default.yml")
-    )
-    logger_config: LoggerConfig = config_manager.load_config(
-        Path("./config/logger/EDA.yml")
-    )
-
-    # Initialize logger
-    logger_manager = LoggerManager(
-        run_name=logger_config.run_name,
-        entity=logger_config.entity,
-        project=logger_config.project,
-        config=data_config,
-    )
-
-    # Initialize data module
-    data_module = MNISTDataModule(
-        data_dir="./data",
-        batch_size=data_config.batch_size,
-        transforms=base_transform(),
-    )
-
-    # Prepare and setup data
-    data_module.prepare_data()
-    data_module.setup("fit")
-    data_module.setup("test")
-
-    # Get dataloaders
-    train_loader = data_module.train_dataloader()
-    val_loader = data_module.val_dataloader()
-    test_loader = data_module.test_dataloader()
-
-    # Log label distributions
+def label_distribution(
+    train_loader: DataLoader[tuple[Tensor, Tensor]],
+    val_loader: DataLoader[tuple[Tensor, Tensor]],
+    test_loader: DataLoader[tuple[Tensor, Tensor]],
+    logger_manager: LoggerManager,
+) -> None:
+    """Log label distributions"""
     for name, loader in [
         ("train", train_loader),
         ("val", val_loader),
@@ -77,6 +50,10 @@ def analyze_mnist_with_wandb():
             data=[[i, count] for i, count in enumerate(label_counts)],
         )
 
+
+def sample_images(
+    train_loader: DataLoader[tuple[Tensor, Tensor]], logger_manager: LoggerManager
+) -> None:
     # Log sample images
     for batch_idx, (images, labels) in enumerate(train_loader):
         if batch_idx == 0:
@@ -109,6 +86,41 @@ def analyze_mnist_with_wandb():
                 caption=[f"Digit {label.item()}" for label in sample_labels],
             )
             break
+
+
+def analyze_mnist_with_wandb() -> None:
+    """Analyze MNIST dataset using Weights & Biases logging"""
+    config_manager = ConfigManager()
+    config = config_manager.load_config(Path("./config/train.yml"))
+    config.logger.run_name = "explore dataset analysis"
+
+    # Initialize logger
+    with LoggerManager(
+        run_name=config.logger.run_name,
+        entity=config.logger.entity,
+        project=config.logger.project,
+        job_type="eval",
+        config=config,
+    ) as logger_manager:
+        # Initialize data module
+        data_module = MNISTDataModule(
+            data_dir="./data",
+            batch_size=config.data.batch_size,
+            transforms=base_transform(),
+        )
+
+        # Prepare and setup data
+        data_module.prepare_data()
+        data_module.setup("fit")
+        data_module.setup("test")
+
+        # Get dataloaders
+        train_loader = data_module.train_dataloader()
+        val_loader = data_module.val_dataloader()
+        test_loader = data_module.test_dataloader()
+
+        label_distribution(train_loader, val_loader, test_loader, logger_manager)
+        sample_images(train_loader, logger_manager)
 
 
 if __name__ == "__main__":
