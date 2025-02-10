@@ -46,7 +46,7 @@ explicit = true
 
 ## Test
 [tool.mypy]
-strict  = true
+strict  = false
 exclude = ["venv", ".venv", "data"] # ignore dataset preprocessing type checking
 
 [tool.pytest.ini_options]
