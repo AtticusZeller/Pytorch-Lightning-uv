@@ -1,7 +1,7 @@
-method: bayes  
+method: bayes
 metric:
-  name: val_accuracy  
-  goal: maximize  
+  name: val_accuracy
+  goal: maximize
 parameters:
   n_layer_1:
     values: [128, 256, 512]
