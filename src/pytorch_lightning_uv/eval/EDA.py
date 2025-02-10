@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -26,7 +25,7 @@ def analyze_mnist_with_wandb():
         run_name=logger_config.run_name,
         entity=logger_config.entity,
         project=logger_config.project,
-        config=asdict(data_config),
+        config=data_config,
     )
 
     # Initialize data module

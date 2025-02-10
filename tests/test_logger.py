@@ -11,7 +11,7 @@ def test_wandb_logger_init(train_config: Config, cleanup_wandb: None) -> None:
     train_config.logger.run_name = run_name
     entity = train_config.logger.entity
     project = train_config.logger.project
-    test_config = asdict(train_config)
+    test_config = train_config
     # Initialize logger with config
     with LoggerManager(
         run_name=run_name,
@@ -28,5 +28,5 @@ def test_wandb_logger_init(train_config: Config, cleanup_wandb: None) -> None:
         assert logger_manager.experiment.entity == entity
         assert (
             logger_manager.experiment.config["optimizer"]["lr"]
-            == test_config["optimizer"]["lr"]
+            == asdict(test_config)["optimizer"]["lr"]
         )

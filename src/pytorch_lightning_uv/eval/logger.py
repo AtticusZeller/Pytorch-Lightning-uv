@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Self
 
 import yaml
+from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.utilities.types import _EVALUATE_OUTPUT
+from rich import print
 from rich.pretty import pprint
 
 import wandb
@@ -38,9 +39,8 @@ class LoggerManager(WandbLogger):
         log_model: bool = True,
         job_type: str = "train",
         base_url: str = "https://wandb.atticux.me",
-        config: dict | None = None,
+        config: Config | None = None,
     ) -> None:
-        config = config or {}
         Path("./logs").mkdir(parents=True, exist_ok=True)
         super().__init__(
             project=project,
@@ -59,7 +59,15 @@ class LoggerManager(WandbLogger):
         )
         self.entity = entity
         self.job_type = job_type
-        pprint(config)
+
+        if config is not None:
+            self.config = config
+
+            if self.sweeping:
+                # update from sweep
+                self._update_config_with_sweep(config)
+
+        pprint(asdict(config))
 
         self._watched_models = []
 
@@ -78,15 +86,9 @@ class LoggerManager(WandbLogger):
 
         # Finish the wandb run
         self.experiment.finish()
-        if self.job_type == "train":
+        if self.job_type == "train" and not self.sweeping:
             print("\nTraining completed! To test this model, use:")
-            print(f"Run ID: {self.version}")
-
-    def log_test_results(self, metrics: _EVALUATE_OUTPUT) -> None:
-        """Log test results to wandb."""
-        columns = ["Metric", "Value"]
-        data = [[k, v] for k, v in metrics[0].items()]
-        self.log_text(key="test_results", columns=columns, data=data)
+            print(f"Run ID: [bold cyan]{self.version}[/bold cyan]")
 
     def load_best_model(self, run_id: str) -> Path:
         """Load the best model from a specific run ID."""
@@ -101,24 +103,43 @@ class LoggerManager(WandbLogger):
             raise FileNotFoundError(f"Model-{run_id} not found.")
         return model_path
 
-    def watch(self, model, log="all", log_freq=100, log_graph=True) -> None:
+    def upload_best_model(
+        self, monitor: str = "val_accuracy", mode: str = "max"
+    ) -> None:
+        """Upload the best model to wandb"""
+        checkpoint_callback = ModelCheckpoint(
+            monitor="val_accuracy",
+            mode="max",
+            dirpath=f"checkpoints/{self.config.model.name}",
+            filename=f"{self.config.model.name}-{self.config.data.dataset}"
+            + "-{epoch:02d}-{val_accuracy:.2f}",
+            save_top_k=1,
+        )
+        self.after_save_checkpoint(checkpoint_callback)
+
+    def watch(self, model, log="all", log_freq=100, log_graph=False) -> None:
         """Override watch method to keep track of watched models."""
         super().watch(model, log=log, log_freq=log_freq, log_graph=log_graph)
         self._watched_models.append(model)
 
-    @classmethod
-    def init_sweep(cls, sweep_config_path: Path, project: str, entity: str) -> str:
+    @staticmethod
+    def init_sweep(sweep_config_path: Path, project: str, entity: str) -> str:
         """Initialize sweep from config file"""
         with open(sweep_config_path) as f:
             sweep_config = yaml.safe_load(f)
 
-        # 创建sweep
         sweep_id = wandb.sweep(sweep_config, project=project, entity=entity)
         return sweep_id
 
-    def update_config_with_sweep(self, config: Config) -> Config:
-        """Update config with sweep values if in sweep mode"""
+    @property
+    def sweeping(self) -> bool:
+        """Check if the current run is part of a sweep"""
+        return self.experiment.sweep_id is not None
 
+    def _update_config_with_sweep(self, config: Config) -> Config:
+        """Update config passing to experiment and wandb config with sweep values
+        if in sweep mode"""
+        # derive sweep config from experiment config
         sweep_config = self.experiment.config.as_dict()
 
         for field in asdict(config):
@@ -127,7 +148,10 @@ class LoggerManager(WandbLogger):
             )
             for key in asdict(sub_config):
                 if key in sweep_config:
+                    # update config with sweep values
                     setattr(sub_config, key, sweep_config[key])
-                    self.experiment.config[field][key] = sweep_config[key]
-
+                    # update wandb config with sweep values
+                    sweep_config[field][key] = sweep_config[key]
+        # force update sweep config
+        self.experiment.config.update(sweep_config, True)
         return config

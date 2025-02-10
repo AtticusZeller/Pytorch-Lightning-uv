@@ -5,13 +5,11 @@ Ref:
     3. https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.ModelCheckpoint.html#lightning.pytorch.callbacks.ModelCheckpoint
 """
 
-from dataclasses import asdict
 from pathlib import Path
 
 import torch
 import typer
 from lightning import Trainer
-from lightning.pytorch.callbacks import ModelCheckpoint, RichProgressBar
 
 import wandb
 from pytorch_lightning_uv.config import ConfigManager
@@ -19,28 +17,24 @@ from pytorch_lightning_uv.data.dataset import MNISTDataModule
 from pytorch_lightning_uv.data.transform import train_transform
 from pytorch_lightning_uv.eval.logger import LoggerManager
 from pytorch_lightning_uv.model import MNIST_MLP
-from pytorch_lightning_uv.utils import set_random_seed
+from pytorch_lightning_uv.utils import create_rich_progress_bar, set_random_seed
 
 set_random_seed()
 torch.set_float32_matmul_precision("high")
 
 
-def training(config_path: Path, sweep_id: str | None = None) -> None:
+def training(config_path: Path) -> None:
     # config
     config_manager = ConfigManager()
     config = config_manager.load_config(config_path)
-    # TODO: fix wandb config failed update with sweep
     # logger
     with LoggerManager(
         run_name=config.logger.run_name,
         entity=config.logger.entity,
         project=config.logger.project,
-        log_model=False if sweep_id is not None else True,
-        config=asdict(config),
+        log_model=True,  # enable log model ckpt
+        config=config,
     ) as logger:
-        if sweep_id is not None:
-            logger.update_config_with_sweep(config)
-
         # dataset
         datamodule = MNISTDataModule(
             batch_size=config.data.batch_size, transforms=train_transform()
@@ -53,21 +47,15 @@ def training(config_path: Path, sweep_id: str | None = None) -> None:
             n_layer_2=config.model.n_layer_2,
             lr=config.optimizer.lr,
         )
-        if sweep_id is None:
+        # log model ckpt and gradients
+        if not logger.sweeping:
             logger.watch(model, log="all")
-            # trainer
-            checkpoint_callback = ModelCheckpoint(
-                monitor="val_accuracy",
-                mode="max",
-                dirpath=f"checkpoints/{config.model.name}",
-                filename=f"{config.model.name}-{config.data.dataset}"
-                + "-{epoch:02d}-{val_accuracy:.2f}",
-                save_top_k=1,
-            )
-            logger.after_save_checkpoint(checkpoint_callback)
+            logger.upload_best_model()
+
+        # trainer
         trainer = Trainer(
             logger=logger,
-            callbacks=[RichProgressBar()],
+            callbacks=[create_rich_progress_bar()],
             accelerator="gpu",
             max_epochs=config.training.max_epochs,
         )
@@ -96,7 +84,7 @@ def evaluation(config_path: Path, run_id: str) -> None:
         entity=config.logger.entity,
         project=config.logger.project,
         id=run_id,
-        config=asdict(config),
+        config=config,
         job_type="eval",
     ) as logger:
         # model
@@ -104,10 +92,10 @@ def evaluation(config_path: Path, run_id: str) -> None:
         model = MNIST_MLP.load_from_checkpoint(model_path)
         model.eval()
         # trainer
-        trainer = Trainer(logger=logger, accelerator="gpu")
-        results = trainer.test(model, datamodule)
-        # log test results
-        logger.log_test_results(results)
+        trainer = Trainer(
+            logger=logger, accelerator="gpu", callbacks=[create_rich_progress_bar()]
+        )
+        trainer.test(model, datamodule)
 
 
 TRAIN_OPTION = typer.Option(False, "--train", help="Train the model")
@@ -144,7 +132,6 @@ def main(
         config_manager = ConfigManager()
         base_config = config_manager.load_config(config)
 
-        # 初始化sweep
         sweep_id = LoggerManager.init_sweep(
             sweep_config_path=sweep_config,
             project=base_config.logger.project,
@@ -155,7 +142,7 @@ def main(
             sweep_id,
             entity=base_config.logger.entity,
             project=base_config.logger.project,
-            function=lambda: training(config, sweep_id),
+            function=lambda: training(config),
             count=sweep_count,
         )
     else:
