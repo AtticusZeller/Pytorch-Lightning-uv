@@ -1,5 +1,22 @@
-data: data/default.yml
-logger: logger/mlp.yml
-model: model/mlp.yml
-optimizer: optimizer/default.yml
-training: training/mlp.yml
+data:
+  augmentation: null
+  batch_size: 128
+  dataset: MNIST
+logger:
+  entity: atticux
+  project: pytorch-lightning-uv
+  run_name: MNIST_MLP
+model:
+  activation: relu
+  dropout: null
+  n_layer_1: 512
+  n_layer_2: 128
+  name: MLP
+optimizer:
+  lr: 0.0001
+  name: adam
+training:
+  accumulate_grad_batches: null
+  gradient_clip_val: null
+  max_epochs: 24
+  precision: null

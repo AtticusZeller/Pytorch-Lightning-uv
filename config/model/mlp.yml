@@ -1,6 +1,0 @@
-model:
-  activation: relu
-  dropout: null
-  n_layer_1: 512
-  n_layer_2: 128
-  name: MLP

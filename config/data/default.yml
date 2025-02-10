@@ -1,4 +1,0 @@
-data:
-  augmentation: null
-  batch_size: 128
-  dataset: MNIST

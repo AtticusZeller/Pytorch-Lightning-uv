@@ -1,4 +1,0 @@
-logger:
-  entity: atticux
-  project: pytorch-lightning-uv
-  run_name: test_run

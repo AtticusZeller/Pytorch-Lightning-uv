@@ -1,5 +1,0 @@
-logger:
-  config: null
-  entity: atticux
-  project: pytorch-lightning-uv
-  run_name: explore dataset analysis

@@ -2,6 +2,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 import pytest
+import yaml
 
 from pytorch_lightning_uv.config import (
     Config,
@@ -16,14 +17,18 @@ from pytorch_lightning_uv.config import (
 
 def test_generate_default_configs(config_manager: ConfigManager, config_path: Path):
     config_manager.generate_default_configs()
-
-    # Check main config files exist
     assert (config_path / "train.yml").exists()
 
-    # Check component directories and configs exist
-    for component in ["model", "optimizer", "data", "training", "logger"]:
-        assert (config_path / component).is_dir()
-        assert (config_path / component / "default.yml").exists()
+    # Verify the content of generated config
+    with open(config_path / "train.yml") as f:
+        config = yaml.safe_load(f)
+
+    assert all(
+        key in config for key in ["model", "optimizer", "data", "training", "logger"]
+    )
+    assert config["model"]["name"] == "MLP"
+    assert config["optimizer"]["lr"] == 1e-4
+    assert config["data"]["dataset"] == "MNIST"
 
 
 def test_load_config(config_manager: ConfigManager, config_path: Path):
@@ -37,10 +42,23 @@ def test_load_config(config_manager: ConfigManager, config_path: Path):
     assert isinstance(config.training, TrainingConfig)
     assert isinstance(config.logger, LoggerConfig)
 
+    # Test default values
+    assert config.model.name == "MLP"
+    assert config.optimizer.lr == 1e-4
+    assert config.data.batch_size == 128
+    assert config.training.max_epochs == 25
+    assert config.logger.project == "pytorch-lightning-uv"
 
-def test_load_nonexistent_config(config_manager: ConfigManager):
+
+def test_load_nonexistent_config(config_manager: ConfigManager, config_path: Path):
     with pytest.raises(FileNotFoundError):
         config_manager.load_config("nonexistent.yml")
+
+    with pytest.raises(FileNotFoundError):
+        config_manager.load_config(config_path / "train.json")
+
+    with pytest.raises(FileNotFoundError):
+        config_manager.load_config(config_path)
 
 
 def test_config_as_dict(config_manager: ConfigManager, config_path: Path):
@@ -49,11 +67,10 @@ def test_config_as_dict(config_manager: ConfigManager, config_path: Path):
     config_dict = asdict(config)
 
     assert isinstance(config_dict, dict)
-    assert "model" in config_dict
-    assert "logger" in config_dict
-    assert "data" in config_dict
-    assert "training" in config_dict
-    assert "optimizer" in config_dict
+    assert all(
+        key in config_dict
+        for key in ["model", "optimizer", "data", "training", "logger"]
+    )
 
     # Verify dict contents match config object
     assert config_dict["model"]["name"] == config.model.name

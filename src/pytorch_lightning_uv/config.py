@@ -68,44 +68,30 @@ class ConfigManager:
     def generate_default_configs(self) -> None:
         """generate default configuration files for evaluation and training"""
         print("Generating default configuration files...")
+        default_config = {}
         # sub config
         for name, component in self.config_map.items():
-            component_dir = self.config_dir / name
-            component_dir.mkdir(exist_ok=True)
-
-            conf = asdict(component())
-            config_path = component_dir / "default.yml"
-            self._save_config({name: conf}, config_path)
-
-        # basic train config
-        base_config = {
-            "model": "model/default.yml",
-            "optimizer": "optimizer/default.yml",
-            "data": "data/default.yml",
-            "training": "training/default.yml",
-            "logger": "logger/default.yml",
-        }
-        self._save_config(base_config, self.config_dir / "train.yml")
+            sub_conf = asdict(component())
+            default_config[name] = sub_conf
+        self._save_config(default_config, self.config_dir / "train.yml")
 
     def load_config(self, config_path: str | Path) -> Config:
-        """load configuration from base config"""
+        """load configuration from yml file"""
         config_path = Path(config_path)
-        if not config_path.exists() or not config_path.is_file():
+        if (
+            not config_path.exists()
+            or not config_path.is_file()
+            or config_path.suffix not in [".yml", ".yaml"]
+        ):
             raise FileNotFoundError(f"Config file not found: {config_path}")
         print(f"Loading config from: [bold cyan]{config_path}[/bold cyan]")
         conf = self._load_config(config_path)
-        if config_path.parent == self.config_dir:
-            # load all config
-            for name, component in conf.items():
-                # filter something like `model: model/default.yml`
-                if name in self.config_map and isinstance(component, str):
-                    config_dict = self._load_config(self.config_dir.joinpath(component))
-                    # replace str with dataclass
-                    conf[name] = self.config_map[name](**config_dict[name])
+        # load all config
+        for name in conf:
+            if name in self.config_map:
+                conf[name] = self.config_map[name](**conf[name])
 
-            return Config(**conf)
-        else:
-            raise ValueError(f"Invalid config file: {config_path}")
+        return Config(**conf)
 
     @staticmethod
     def _save_config(config: dict[str, Any], save_path: Path) -> None:
