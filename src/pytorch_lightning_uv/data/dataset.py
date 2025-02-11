@@ -94,8 +94,8 @@ class MNIST(DataSetBase):
         return self.root.joinpath(self.__class__.__name__, "raw")
 
     @property
-    def class_to_idx(self) -> dict[str, int]:
-        return {_class: i for i, _class in enumerate(self.classes)}
+    def label_to_class(self) -> dict[str, int]:
+        return {i: _class for i, _class in enumerate(self.classes)}
 
     def _load_data(self) -> tuple[Tensor, Tensor]:
         image_file = f"{'train' if self.train else 't10k'}-images-idx3-ubyte"
@@ -204,19 +204,19 @@ class DataModule(L.LightningDataModule):
     def setup(self, stage: str):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            mnist_full = self.data(self.data_dir, train=True, transform=self.transform)
-            self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
+            full_data = self.data(self.data_dir, train=True, transform=self.transform)
+            self.train_data, self.val_data = random_split(full_data, [55000, 5000])
 
         # Assign test dataset for use in dataloader(s)
         if stage == "test":
-            self.mnist_test = self.data(
+            self.test_data = self.data(
                 self.data_dir, train=False, transform=self.transform
             )
 
     def train_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer fit() method uses."""
         return DataLoader(
-            self.mnist_train,
+            self.train_data,
             batch_size=self.batch_size,
             pin_memory=True,
             shuffle=True,
@@ -228,7 +228,7 @@ class DataModule(L.LightningDataModule):
     def val_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer fit() and validate() methods uses."""
         return DataLoader(
-            self.mnist_val,
+            self.val_data,
             batch_size=self.batch_size,
             pin_memory=True,
             num_workers=15,
@@ -239,7 +239,7 @@ class DataModule(L.LightningDataModule):
     def test_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer test() method uses."""
         return DataLoader(
-            self.mnist_test, pin_memory=True, batch_size=self.batch_size, num_workers=15
+            self.test_data, pin_memory=True, batch_size=self.batch_size, num_workers=15
         )
 
     def prepare_data(self) -> None:

@@ -8,6 +8,8 @@ __all__ = ["create_data_module"]
 def create_data_module(
     name: str = "mnist", batch_size: int = 32, transforms: v2.Compose | None = None
 ) -> DataModule:
-    data = {"mnist": MNIST, "fashion_mnist": FashionMNIST}[name.lower()]
+    data = {"mnist": MNIST, "fashion_mnist": FashionMNIST}[
+        name.lower().replace(" ", "_")
+    ]
 
     return DataModule(data, batch_size=batch_size, transforms=transforms)
