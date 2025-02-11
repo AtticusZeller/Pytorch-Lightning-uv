@@ -15,6 +15,7 @@ import wandb
 from pytorch_lightning_uv.config import ConfigManager
 from pytorch_lightning_uv.data import create_data_module
 from pytorch_lightning_uv.data.transform import train_transform
+from pytorch_lightning_uv.eval import EDA
 from pytorch_lightning_uv.eval.logger import LoggerManager
 from pytorch_lightning_uv.model import MLP
 from pytorch_lightning_uv.utils import create_rich_progress_bar, set_random_seed
@@ -103,6 +104,7 @@ def evaluation(config_path: Path, run_id: str) -> None:
         trainer.test(model, datamodule)
 
 
+EDA_OPTION = typer.Option(False, "--eda", help="Explore dataset")
 TRAIN_OPTION = typer.Option(False, "--train", help="Train the model")
 EVAL_OPTION = typer.Option(False, "--eval", help="Test the model")
 CONFIG_OPTION = typer.Option("data/train.yml", "-c", help="Path to config file")
@@ -115,27 +117,32 @@ SWEEP_COUNT_OPTION = typer.Option(10, "--sweep-count", help="Number of sweep run
 
 
 def main(
+    eda: bool = EDA_OPTION,
     train: bool = TRAIN_OPTION,
     eval: bool = EVAL_OPTION,
     sweep: bool = SWEEP_OPTION,
-    config: Path = CONFIG_OPTION,
+    config_file: Path = CONFIG_OPTION,
     sweep_config: Path | None = SWEEP_CONFIG_OPTION,
     sweep_count: int = SWEEP_COUNT_OPTION,
     run_id: str | None = RUN_ID_OPTION,
 ) -> None:
-    if train:
-        training(config)
+    if eda:
+        config_manager = ConfigManager()
+        config = config_manager.load_config(config_file)
+        EDA.analyze_dataset(config)
+    elif train:
+        training(config_file)
     elif eval:
         if run_id is None:
             print("Error: --run-id is required for testing")
             return
-        evaluation(config, run_id)
+        evaluation(config_file, run_id)
     elif sweep:
         if sweep_config is None:
             print("Error: --sweep-config is required for sweep")
             return
         config_manager = ConfigManager()
-        base_config = config_manager.load_config(config)
+        base_config = config_manager.load_config(config_file)
 
         sweep_id = LoggerManager.init_sweep(
             sweep_config_path=sweep_config,
@@ -147,7 +154,7 @@ def main(
             sweep_id,
             entity=base_config.logger.entity,
             project=base_config.logger.project,
-            function=lambda: training(config),
+            function=lambda: training(config_file),
             count=sweep_count,
         )
     else:

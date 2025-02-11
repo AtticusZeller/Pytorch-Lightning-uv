@@ -1,42 +1,35 @@
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
-from torch import Tensor
-from torch.utils.data import DataLoader
 
-from pytorch_lightning_uv.config import ConfigManager
+from pytorch_lightning_uv.config import Config
 from pytorch_lightning_uv.data import create_data_module
+from pytorch_lightning_uv.data.dataset import DataModule
 from pytorch_lightning_uv.data.transform import base_transform
 from pytorch_lightning_uv.eval.logger import LoggerManager
-from pytorch_lightning_uv.utils import set_random_seed
 
 
-def label_distribution(
-    train_loader: DataLoader[tuple[Tensor, Tensor]],
-    val_loader: DataLoader[tuple[Tensor, Tensor]],
-    test_loader: DataLoader[tuple[Tensor, Tensor]],
-    logger_manager: LoggerManager,
-) -> None:
+def label_distribution(data_module: DataModule, logger_manager: LoggerManager) -> None:
     """Log label distributions"""
+    # Get dataloaders
+    train_loader = data_module.train_dataloader()
+    val_loader = data_module.val_dataloader()
+    test_loader = data_module.test_dataloader()
     for name, loader in [
         ("train", train_loader),
         ("val", val_loader),
         ("test", test_loader),
     ]:
         # Collect labels
-        all_labels = []
-        for _, labels in loader:
-            all_labels.extend(labels.numpy())
+        all_labels = [label for _, labels in loader for label in labels]
 
         # Count label frequencies
         label_counts = np.bincount(np.array(all_labels))
 
         # Create distribution plot
         plt.figure(figsize=(10, 6))
-        plt.bar(range(10), label_counts)
+        plt.bar(data_module.data.classes, label_counts)
         plt.title(f"{name} Set Label Distribution")
-        plt.xlabel("Digit")
+        plt.xlabel("class")
         plt.ylabel("Count")
 
         # Log to wandb
@@ -46,14 +39,15 @@ def label_distribution(
         # Log as table
         logger_manager.log_table(
             key=f"stats/{name}_distribution",
-            columns=["digit", "count"],
+            columns=["class", "count"],
             data=[[i, count] for i, count in enumerate(label_counts)],
         )
 
 
-def sample_images(
-    train_loader: DataLoader[tuple[Tensor, Tensor]], logger_manager: LoggerManager
-) -> None:
+def sample_images(data_module: DataModule, logger_manager: LoggerManager) -> None:
+    # Get dataloaders
+    train_loader = data_module.train_dataloader()
+    label_map = data_module.data.classes
     # Log sample images
     for batch_idx, (images, labels) in enumerate(train_loader):
         if batch_idx == 0:
@@ -68,13 +62,13 @@ def sample_images(
             ):
                 ax = axes[idx // 5, idx % 5]
                 ax.imshow(img[0], cmap="gray")
-                ax.set_title(f"Label: {label}")
+                ax.set_title(f"Label: {label_map[label]}")
                 ax.axis("off")
             plt.tight_layout()
 
             # Log to wandb
             logger_manager.log_image(
-                "samples/grid", [plt.gcf()], caption=["Sample MNIST digits"]
+                "samples/grid", [plt.gcf()], caption=["Sample Images"]
             )
             plt.close()
 
@@ -83,15 +77,15 @@ def sample_images(
             logger_manager.log_image(
                 "samples/individual",
                 images_to_log,
-                caption=[f"Digit {label.item()}" for label in sample_labels],
+                caption=[
+                    f"Class: {label_map[label.item()]}" for label in sample_labels
+                ],
             )
             break
 
 
-def analyze_mnist_with_wandb(name: str = "mnist") -> None:
+def analyze_dataset(config: Config) -> None:
     """Analyze MNIST dataset using Weights & Biases logging"""
-    config_manager = ConfigManager()
-    config = config_manager.load_config(Path("./config/train.yml"))
     config.logger.run_name = "explore dataset analysis"
 
     # Initialize logger
@@ -114,15 +108,5 @@ def analyze_mnist_with_wandb(name: str = "mnist") -> None:
         data_module.setup("fit")
         data_module.setup("test")
 
-        # Get dataloaders
-        train_loader = data_module.train_dataloader()
-        val_loader = data_module.val_dataloader()
-        test_loader = data_module.test_dataloader()
-
-        label_distribution(train_loader, val_loader, test_loader, logger_manager)
-        sample_images(train_loader, logger_manager)
-
-
-if __name__ == "__main__":
-    set_random_seed()
-    analyze_mnist_with_wandb()
+        label_distribution(data_module, logger_manager)
+        sample_images(data_module, logger_manager)
