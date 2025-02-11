@@ -13,6 +13,8 @@ from torchvision.transforms import v2 as v2
 
 
 class DataSetBase(VisionDataset):
+    classes: list[str]  # class = list[label]
+
     def __init__(
         self,
         root: str | Path,
@@ -41,6 +43,10 @@ class DataSetBase(VisionDataset):
 
     def _download(self) -> None:
         raise NotImplementedError
+
+    @property
+    def raw_folder(self) -> Path:
+        return self.root.joinpath(self.__class__.__name__, "raw")
 
     def __getitem__(self, index: int) -> tuple[Any | Tensor, Any | int]:
         img, target = self.data[index], int(self.targets[index])
@@ -88,14 +94,6 @@ class MNIST(DataSetBase):
         "8 - eight",
         "9 - nine",
     ]
-
-    @property
-    def raw_folder(self) -> Path:
-        return self.root.joinpath(self.__class__.__name__, "raw")
-
-    @property
-    def label_to_class(self) -> dict[str, int]:
-        return {i: _class for i, _class in enumerate(self.classes)}
 
     def _load_data(self) -> tuple[Tensor, Tensor]:
         image_file = f"{'train' if self.train else 't10k'}-images-idx3-ubyte"
