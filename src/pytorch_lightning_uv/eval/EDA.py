@@ -6,7 +6,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from pytorch_lightning_uv.config import ConfigManager
-from pytorch_lightning_uv.data import MNISTDataModule
+from pytorch_lightning_uv.data import create_data_module
 from pytorch_lightning_uv.data.transform import base_transform
 from pytorch_lightning_uv.eval.logger import LoggerManager
 from pytorch_lightning_uv.utils import set_random_seed
@@ -88,7 +88,7 @@ def sample_images(
             break
 
 
-def analyze_mnist_with_wandb() -> None:
+def analyze_mnist_with_wandb(name: str = "mnist") -> None:
     """Analyze MNIST dataset using Weights & Biases logging"""
     config_manager = ConfigManager()
     config = config_manager.load_config(Path("./config/train.yml"))
@@ -103,8 +103,8 @@ def analyze_mnist_with_wandb() -> None:
         config=config,
     ) as logger_manager:
         # Initialize data module
-        data_module = MNISTDataModule(
-            data_dir="./data",
+        data_module = create_data_module(
+            name=config.data.dataset,
             batch_size=config.data.batch_size,
             transforms=base_transform(),
         )

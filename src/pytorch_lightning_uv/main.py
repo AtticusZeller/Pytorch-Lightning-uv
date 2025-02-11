@@ -13,7 +13,7 @@ from lightning import Trainer
 
 import wandb
 from pytorch_lightning_uv.config import ConfigManager
-from pytorch_lightning_uv.data.dataset import MNISTDataModule
+from pytorch_lightning_uv.data import create_data_module
 from pytorch_lightning_uv.data.transform import train_transform
 from pytorch_lightning_uv.eval.logger import LoggerManager
 from pytorch_lightning_uv.model import MNIST_MLP
@@ -36,8 +36,10 @@ def training(config_path: Path) -> None:
         config=config,
     ) as logger:
         # dataset
-        datamodule = MNISTDataModule(
-            batch_size=config.data.batch_size, transforms=train_transform()
+        datamodule = create_data_module(
+            name=config.data.dataset,
+            batch_size=config.data.batch_size,
+            transforms=train_transform(),
         )
         datamodule.prepare_data()
         datamodule.setup("fit")
@@ -74,8 +76,10 @@ def evaluation(config_path: Path, run_id: str) -> None:
     config_manager = ConfigManager()
     config = config_manager.load_config(config_path)
     # data
-    datamodule = MNISTDataModule(
-        batch_size=config.data.batch_size, transforms=train_transform()
+    datamodule = create_data_module(
+        name=config.data.dataset,
+        batch_size=config.data.batch_size,
+        transforms=train_transform(),
     )
     datamodule.prepare_data()
     datamodule.setup("test")

@@ -12,7 +12,52 @@ from torchvision.datasets.utils import check_integrity, download_and_extract_arc
 from torchvision.transforms import v2 as v2
 
 
-class MNIST(VisionDataset):
+class DataSetBase(VisionDataset):
+    def __init__(
+        self,
+        root: str | Path,
+        train: bool = True,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
+        download: bool = True,
+    ) -> None:
+        super().__init__(root, transform=transform, target_transform=target_transform)
+        self.root = Path(self.root)
+
+        self.train = train  # training set or test set
+
+        if download:
+            self._download()
+
+        if not self._check_exists():
+            raise RuntimeError(
+                "Dataset not found. You can use download=True to download it"
+            )
+
+        self.data, self.targets = self._load_data()
+
+    def _load_data(self) -> tuple[Tensor, Tensor]:
+        raise NotImplementedError
+
+    def _download(self) -> None:
+        raise NotImplementedError
+
+    def __getitem__(self, index: int) -> tuple[Any | Tensor, Any | int]:
+        img, target = self.data[index], int(self.targets[index])
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
+class MNIST(DataSetBase):
     """`MNIST <http://yann.lecun.com/exdb/mnist/>` Dataset.
     Responsible for downloading,vectorize and splitting it into train and test dataset.
     It is a subclass of torch.utils.data Dataset class.
@@ -52,29 +97,6 @@ class MNIST(VisionDataset):
     def class_to_idx(self) -> dict[str, int]:
         return {_class: i for i, _class in enumerate(self.classes)}
 
-    def __init__(
-        self,
-        root: str | Path,
-        train: bool = True,
-        transform: Callable | None = None,
-        target_transform: Callable | None = None,
-        download: bool = True,
-    ) -> None:
-        super().__init__(root, transform=transform, target_transform=target_transform)
-        self.root = Path(self.root)
-
-        self.train = train  # training set or test set
-
-        if download:
-            self.download()
-
-        if not self._check_exists():
-            raise RuntimeError(
-                "Dataset not found. You can use download=True to download it"
-            )
-
-        self.data, self.targets = self._load_data()
-
     def _load_data(self) -> tuple[Tensor, Tensor]:
         image_file = f"{'train' if self.train else 't10k'}-images-idx3-ubyte"
         data = read_image_file(self.raw_folder.joinpath(image_file))
@@ -96,18 +118,7 @@ class MNIST(VisionDataset):
         img: Tensor, shape(H,W)=28x28, dtype=torch.uint8
         target: int
         """
-        img, target = self.data[index], int(self.targets[index])
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return img, target
-
-    def __len__(self) -> int:
-        return len(self.data)
+        return super().__getitem__(index)
 
     def _check_exists(self) -> bool:
         return all(
@@ -115,7 +126,7 @@ class MNIST(VisionDataset):
             for url, _ in self.resources
         )
 
-    def download(self) -> None:
+    def _download(self) -> None:
         # check
         if self._check_exists():
             return
@@ -145,32 +156,60 @@ class MNIST(VisionDataset):
         return f"Split: {split}"
 
 
-class MNISTDataModule(L.LightningDataModule):
+class FashionMNIST(MNIST):
+    """`Fashion-MNIST <https://github.com/zalandoresearch/fashion-mnist>`_ Dataset."""
+
+    mirrors = ["http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"]
+
+    resources = [
+        ("train-images-idx3-ubyte.gz", "8d4fb7e6c68d591d4c3dfef9ec88bf0d"),
+        ("train-labels-idx1-ubyte.gz", "25c81989df183df01b3e8a0aad5dffbe"),
+        ("t10k-images-idx3-ubyte.gz", "bef4ecab320f06d8554ea6380940ec79"),
+        ("t10k-labels-idx1-ubyte.gz", "bb300cfdad3c16e7a12a480ee83cd310"),
+    ]
+    classes = [
+        "T-shirt/top",
+        "Trouser",
+        "Pullover",
+        "Dress",
+        "Coat",
+        "Sandal",
+        "Shirt",
+        "Sneaker",
+        "Bag",
+        "Ankle boot",
+    ]
+
+
+class DataModule(L.LightningDataModule):
     """lightning DataModule for MNIST dataset
     Ref: `https://lightning.ai/docs/pytorch/stable/data/datamodule.html#lightningdatamodule`
     """
 
     def __init__(
         self,
+        data: DataSetBase,
         data_dir: str | Path = "./data",
         batch_size: int = 32,
         transforms: v2.Compose | None = None,
     ) -> None:
         super().__init__()
         self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
         self.batch_size = batch_size
 
         self.transform = transforms
+        self.data = data
 
     def setup(self, stage: str):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
-            mnist_full = MNIST(self.data_dir, train=True, transform=self.transform)
+            mnist_full = self.data(self.data_dir, train=True, transform=self.transform)
             self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
 
         # Assign test dataset for use in dataloader(s)
         if stage == "test":
-            self.mnist_test = MNIST(
+            self.mnist_test = self.data(
                 self.data_dir, train=False, transform=self.transform
             )
 
@@ -205,5 +244,5 @@ class MNISTDataModule(L.LightningDataModule):
 
     def prepare_data(self) -> None:
         """load raw data or tokenize data"""
-        MNIST(self.data_dir, train=True, download=True)
-        MNIST(self.data_dir, train=False, download=True)
+        self.data(self.data_dir, train=True, download=True)
+        self.data(self.data_dir, train=False, download=True)

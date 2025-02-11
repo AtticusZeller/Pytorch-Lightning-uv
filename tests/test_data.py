@@ -2,12 +2,9 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2 as v2
 
-from pytorch_lightning_uv.data import (
-    MNIST,
-    MNISTDataModule,
-    base_transform,
-    reshape_image,
-)
+from pytorch_lightning_uv.data import create_data_module
+from pytorch_lightning_uv.data.dataset import MNIST
+from pytorch_lightning_uv.data.transform import base_transform, reshape_image
 
 
 def test_dataset() -> None:
@@ -29,10 +26,8 @@ def test_dataset() -> None:
     assert test_img.shape == (1, 28, 28)
 
 
-def test_MNISTDataModule():
-    data_module = MNISTDataModule(
-        data_dir="./data", batch_size=32, transforms=base_transform()
-    )
+def test_DataModule():
+    data_module = create_data_module(batch_size=32, transforms=base_transform())
     data_module.prepare_data()
     data_module.setup("fit")
     data_module.setup("test")
