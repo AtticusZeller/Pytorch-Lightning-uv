@@ -12,7 +12,17 @@ import typer
 from lightning import Trainer
 
 import wandb
-from pytorch_lightning_uv.config import ConfigManager
+from pytorch_lightning_uv.cli import (
+    ConfigPath,
+    EDAFlag,
+    EvalFlag,
+    RunID,
+    SweepConfigPath,
+    SweepCount,
+    SweepFlag,
+    TrainFlag,
+)
+from pytorch_lightning_uv.config import Config, ConfigManager
 from pytorch_lightning_uv.data import create_data_module
 from pytorch_lightning_uv.data.transform import train_transform
 from pytorch_lightning_uv.eval import EDA
@@ -24,10 +34,7 @@ set_random_seed()
 torch.set_float32_matmul_precision("high")
 
 
-def training(config_path: Path) -> None:
-    # config
-    config_manager = ConfigManager()
-    config = config_manager.load_config(config_path)
+def training(config: Config) -> None:
     # logger
     with LoggerManager(
         run_name=config.logger.run_name,
@@ -66,16 +73,13 @@ def training(config_path: Path) -> None:
         trainer.fit(model, datamodule)
 
 
-def evaluation(config_path: Path, run_id: str) -> None:
+def evaluation(config: Config, run_id: str) -> None:
     """Test the model from a specific wandb run.
 
     Args:
         config_path: Path to config file
         run_id: The wandb run ID to test (printed at end of training)
     """
-    # config
-    config_manager = ConfigManager()
-    config = config_manager.load_config(config_path)
     # data
     datamodule = create_data_module(
         name=config.data.dataset,
@@ -104,61 +108,61 @@ def evaluation(config_path: Path, run_id: str) -> None:
         trainer.test(model, datamodule)
 
 
-EDA_OPTION = typer.Option(False, "--eda", help="Explore dataset")
-TRAIN_OPTION = typer.Option(False, "--train", help="Train the model")
-EVAL_OPTION = typer.Option(False, "--eval", help="Test the model")
-CONFIG_OPTION = typer.Option("data/train.yml", "-c", help="Path to config file")
-RUN_ID_OPTION = typer.Option(None, "--run-id", help="WandB run ID to test")
-SWEEP_OPTION = typer.Option(False, "--sweep", help="Run hyperparameter sweep")
-SWEEP_CONFIG_OPTION = typer.Option(
-    None, "--sweep-config", help="Path to sweep config file"
-)
-SWEEP_COUNT_OPTION = typer.Option(10, "--sweep-count", help="Number of sweep runs")
-
-
 def main(
-    eda: bool = EDA_OPTION,
-    train: bool = TRAIN_OPTION,
-    eval: bool = EVAL_OPTION,
-    sweep: bool = SWEEP_OPTION,
-    config_file: Path = CONFIG_OPTION,
-    sweep_config: Path | None = SWEEP_CONFIG_OPTION,
-    sweep_count: int = SWEEP_COUNT_OPTION,
-    run_id: str | None = RUN_ID_OPTION,
+    config_file: ConfigPath = Path("data/train.yml"),
+    eda: EDAFlag = False,
+    train: TrainFlag = False,
+    eval: EvalFlag = False,
+    sweep: SweepFlag = False,
+    sweep_config: SweepConfigPath = None,
+    sweep_count: SweepCount = 10,
+    run_id: RunID = None,
 ) -> None:
+    """
+    ML Training and Evaluation CLI:
+
+    - Exploratory Data Analysis (EDA)\n
+    - Model Training\n
+    - Model Evaluation\n
+    - Hyperparameter Sweeps
+    """
+    config_manager = ConfigManager()
+    config = config_manager.load_config(config_file)
+
     if eda:
-        config_manager = ConfigManager()
-        config = config_manager.load_config(config_file)
         EDA.analyze_dataset(config)
     elif train:
-        training(config_file)
-    elif eval:
-        if run_id is None:
-            print("Error: --run-id is required for testing")
-            return
-        evaluation(config_file, run_id)
-    elif sweep:
-        if sweep_config is None:
-            print("Error: --sweep-config is required for sweep")
-            return
-        config_manager = ConfigManager()
-        base_config = config_manager.load_config(config_file)
-
+        training(config)
+    elif eval and run_id:
+        evaluation(config, run_id)
+    elif sweep and sweep_config:
         sweep_id = LoggerManager.init_sweep(
             sweep_config_path=sweep_config,
-            project=base_config.logger.project,
-            entity=base_config.logger.entity,
+            project=config.logger.project,
+            entity=config.logger.entity,
         )
-
         wandb.agent(
             sweep_id,
-            entity=base_config.logger.entity,
-            project=base_config.logger.project,
-            function=lambda: training(config_file),
+            entity=config.logger.entity,
+            project=config.logger.project,
+            function=lambda: training(config),
             count=sweep_count,
         )
     else:
-        print("No command selected. Use --help to see available commands.")
+        options = {
+            "config_file": config_file,
+            "eda": eda,
+            "train": train,
+            "eval": eval,
+            "run_id": run_id,
+            "sweep": sweep,
+            "sweep_config": sweep_config,
+            "sweep_count": sweep_count,
+        }
+        raise ValueError(
+            "Invalid combination of options:\n"
+            + "\n".join(f"{k}={v}" for k, v in options.items())
+        )
 
 
 if __name__ == "__main__":
