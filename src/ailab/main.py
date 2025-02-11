@@ -27,7 +27,7 @@ from ailab.data import create_data_module
 from ailab.data.transform import train_transform
 from ailab.eval import EDA
 from ailab.eval.logger import LoggerManager
-from ailab.model import MLP
+from ailab.model import create_model
 from ailab.utils import create_rich_progress_bar, set_random_seed
 
 set_random_seed()
@@ -52,12 +52,7 @@ def training(config: Config) -> None:
         datamodule.prepare_data()
         datamodule.setup("fit")
         # model
-        model = MLP(
-            n_layer_1=config.model.n_layer_1,
-            n_layer_2=config.model.n_layer_2,
-            lr=config.optimizer.lr,
-            dropout_rate=config.model.dropout,
-        )
+        model = create_model(config)
         # log model ckpt and gradients
         if not logger.sweeping:
             logger.watch(model, log="all")
@@ -99,7 +94,7 @@ def evaluation(config: Config, run_id: str) -> None:
     ) as logger:
         # model
         model_path = logger.load_best_model(run_id)
-        model = MLP.load_from_checkpoint(model_path)
+        model = create_model(config, model_path)
         model.eval()
         # trainer
         trainer = Trainer(

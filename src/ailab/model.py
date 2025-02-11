@@ -1,9 +1,13 @@
+from pathlib import Path
+
 import lightning.pytorch as pl
 import torch
 from torch import Tensor
 from torch.nn import BatchNorm1d, CrossEntropyLoss, Dropout, Linear, functional as F
 from torch.optim import Adam
 from torchmetrics.functional import accuracy
+
+from ailab.config import Config
 
 
 class BaseModel(pl.LightningModule):
@@ -109,3 +113,19 @@ class MLP(BaseModel):
         x = self.layer_3(x)
 
         return x
+
+
+def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
+    if config.model.name.lower() == "mlp":
+        return (
+            MLP(
+                n_layer_1=config.model.n_layer_1,
+                n_layer_2=config.model.n_layer_2,
+                lr=config.optimizer.lr,
+                dropout_rate=config.model.dropout,
+            )
+            if model_path is None
+            else MLP.load_from_checkpoint(model_path)
+        )
+    else:
+        raise ValueError(f"Model name {config.model.name} not supported.")
