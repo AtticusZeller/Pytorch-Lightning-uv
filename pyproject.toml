@@ -198,7 +198,7 @@ pre_commit_hooks       = []
 post_commit_hooks      = []
 
 [[tool.bumpversion.files]]
-filename = "src/pytorch_lightning_uv/__init__.py"
+filename = "src/ailab/__init__.py"
 
 [[tool.bumpversion.files]]
 filename = "CHANGELOG.md"

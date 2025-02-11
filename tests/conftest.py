@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 
 import wandb
-from pytorch_lightning_uv.config import Config, ConfigManager
-from pytorch_lightning_uv.utils import set_random_seed
+from ailab.config import Config, ConfigManager
+from ailab.utils import set_random_seed
 
 
 @pytest.fixture(scope="session")

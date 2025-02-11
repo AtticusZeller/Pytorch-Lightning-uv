@@ -1,7 +1,7 @@
 from dataclasses import asdict
 
-from pytorch_lightning_uv.config import Config
-from pytorch_lightning_uv.eval.logger import LoggerManager
+from ailab.config import Config
+from ailab.eval.logger import LoggerManager
 
 
 def test_wandb_logger_init(train_config: Config, cleanup_wandb: None) -> None:

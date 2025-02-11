@@ -10,7 +10,7 @@ from rich.pretty import pprint
 from torch import nn
 
 import wandb
-from pytorch_lightning_uv.config import (
+from ailab.config import (
     Config,
     DataConfig,
     ModelConfig,

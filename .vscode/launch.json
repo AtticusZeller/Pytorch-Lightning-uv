@@ -11,7 +11,7 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "name": "Evaluation MLP",
-      "program": "${workspaceFolder}/src/pytorch_lightning_uv/main.py",
+      "program": "${workspaceFolder}/src/ailab/main.py",
       "request": "launch",
       "type": "debugpy"
     },
@@ -24,7 +24,7 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "name": "Train MLP",
-      "program": "${workspaceFolder}/src/pytorch_lightning_uv/main.py",
+      "program": "${workspaceFolder}/src/ailab/main.py",
       "request": "launch",
       "type": "debugpy"
     },
@@ -39,7 +39,7 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "name": "Sweep MLP",
-      "program": "${workspaceFolder}/src/pytorch_lightning_uv/main.py",
+      "program": "${workspaceFolder}/src/ailab/main.py",
       "request": "launch",
       "type": "debugpy"
     },

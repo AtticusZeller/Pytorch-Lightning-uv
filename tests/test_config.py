@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from pytorch_lightning_uv.config import (
+from ailab.config import (
     Config,
     ConfigManager,
     DataConfig,

@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pytorch_lightning_uv.config import Config
-from pytorch_lightning_uv.data import create_data_module
-from pytorch_lightning_uv.data.dataset import DataModule
-from pytorch_lightning_uv.data.transform import base_transform
-from pytorch_lightning_uv.eval.logger import LoggerManager
+from ailab.config import Config
+from ailab.data import create_data_module
+from ailab.data.dataset import DataModule
+from ailab.data.transform import base_transform
+from ailab.eval.logger import LoggerManager
 
 
 def label_distribution(data_module: DataModule, logger_manager: LoggerManager) -> None:

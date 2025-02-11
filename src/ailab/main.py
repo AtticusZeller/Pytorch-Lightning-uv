@@ -12,7 +12,7 @@ import typer
 from lightning import Trainer
 
 import wandb
-from pytorch_lightning_uv.cli import (
+from ailab.cli import (
     ConfigPath,
     EDAFlag,
     EvalFlag,
@@ -22,13 +22,13 @@ from pytorch_lightning_uv.cli import (
     SweepFlag,
     TrainFlag,
 )
-from pytorch_lightning_uv.config import Config, ConfigManager
-from pytorch_lightning_uv.data import create_data_module
-from pytorch_lightning_uv.data.transform import train_transform
-from pytorch_lightning_uv.eval import EDA
-from pytorch_lightning_uv.eval.logger import LoggerManager
-from pytorch_lightning_uv.model import MLP
-from pytorch_lightning_uv.utils import create_rich_progress_bar, set_random_seed
+from ailab.config import Config, ConfigManager
+from ailab.data import create_data_module
+from ailab.data.transform import train_transform
+from ailab.eval import EDA
+from ailab.eval.logger import LoggerManager
+from ailab.model import MLP
+from ailab.utils import create_rich_progress_bar, set_random_seed
 
 set_random_seed()
 torch.set_float32_matmul_precision("high")
