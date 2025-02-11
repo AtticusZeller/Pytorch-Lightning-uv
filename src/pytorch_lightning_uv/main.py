@@ -16,7 +16,7 @@ from pytorch_lightning_uv.config import ConfigManager
 from pytorch_lightning_uv.data import create_data_module
 from pytorch_lightning_uv.data.transform import train_transform
 from pytorch_lightning_uv.eval.logger import LoggerManager
-from pytorch_lightning_uv.model import MNIST_MLP
+from pytorch_lightning_uv.model import MLP
 from pytorch_lightning_uv.utils import create_rich_progress_bar, set_random_seed
 
 set_random_seed()
@@ -44,7 +44,7 @@ def training(config_path: Path) -> None:
         datamodule.prepare_data()
         datamodule.setup("fit")
         # model
-        model = MNIST_MLP(
+        model = MLP(
             n_layer_1=config.model.n_layer_1,
             n_layer_2=config.model.n_layer_2,
             lr=config.optimizer.lr,
@@ -94,7 +94,7 @@ def evaluation(config_path: Path, run_id: str) -> None:
     ) as logger:
         # model
         model_path = logger.load_best_model(run_id)
-        model = MNIST_MLP.load_from_checkpoint(model_path)
+        model = MLP.load_from_checkpoint(model_path)
         model.eval()
         # trainer
         trainer = Trainer(

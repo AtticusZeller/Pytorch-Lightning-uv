@@ -6,7 +6,7 @@ from torch.optim import Adam
 from torchmetrics.functional import accuracy
 
 
-class MINIST_BASE(pl.LightningModule):
+class BaseModel(pl.LightningModule):
     """MINST MLP model
     Ref: https://colab.research.google.com/github/wandb/examples/blob/master/colabs/pytorch-lightning/Optimize_Pytorch_Lightning_models_with_Weights_%26_Biases.ipynb#scrollTo=gzaiGUAz1saI
     """
@@ -56,7 +56,7 @@ class MINIST_BASE(pl.LightningModule):
         return preds, loss, acc
 
 
-class MNIST_MLP(MINIST_BASE):
+class MLP(BaseModel):
     """MINST MLP model
     Ref: https://colab.research.google.com/github/wandb/examples/blob/master/colabs/pytorch-lightning/Optimize_Pytorch_Lightning_models_with_Weights_%26_Biases.ipynb#scrollTo=gzaiGUAz1saI
     """
