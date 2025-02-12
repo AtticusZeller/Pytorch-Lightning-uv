@@ -4,7 +4,7 @@ from torchvision.transforms import v2 as v2
 
 from ailab.data import create_data_module
 from ailab.data.dataset import MNIST
-from ailab.data.transform import base_transform, reshape_image
+from ailab.data.transform import reshape_image
 
 
 def test_dataset() -> None:
@@ -27,7 +27,7 @@ def test_dataset() -> None:
 
 
 def test_DataModule():
-    data_module = create_data_module(batch_size=32, transforms=base_transform())
+    data_module = create_data_module(batch_size=32, transform="base")
     data_module.prepare_data()
     data_module.setup("fit")
     data_module.setup("test")
@@ -82,14 +82,3 @@ def test_DataModule():
         assert torch.max(labels) < 10
         assert torch.min(labels) >= 0
         break  # Test only first batch
-
-
-def test_mean_std() -> None:
-    train_dataset = MNIST(
-        root="./data", train=True, download=True, transform=base_transform()
-    )
-    loader = DataLoader(train_dataset, batch_size=len(train_dataset))
-    data = next(iter(loader))[0]
-    mean, std = data.mean().item(), data.std().item()
-    print("mean:", mean)  # 0.13066047430038452
-    print("std:", std)  # 0.30810782313346863

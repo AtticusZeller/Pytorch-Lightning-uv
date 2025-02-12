@@ -14,6 +14,8 @@ from torchvision.transforms import v2 as v2
 
 class DataSetBase(VisionDataset):
     classes: list[str]  # class = list[label]
+    mean: tuple[float, ...]
+    std: tuple[float, ...]
 
     def __init__(
         self,
@@ -94,6 +96,8 @@ class MNIST(DataSetBase):
         "8 - eight",
         "9 - nine",
     ]
+    mean = (0.1307,)
+    std = (0.3081,)
 
     def _load_data(self) -> tuple[Tensor, Tensor]:
         image_file = f"{'train' if self.train else 't10k'}-images-idx3-ubyte"
@@ -177,6 +181,8 @@ class FashionMNIST(MNIST):
         "Bag",
         "Ankle boot",
     ]
+    mean = (0.2860,)
+    std: tuple[float, ...] = (0.3530,)
 
 
 class DataModule(L.LightningDataModule):

@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import torch
 import torchvision.transforms.v2 as v2
 from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
@@ -72,11 +74,7 @@ def base_transform() -> v2.Compose:
     return v2.Compose([reshape_image, v2.ToDtype(torch.float32, scale=True)])
 
 
-def train_transform() -> v2.Compose:
+def standardize_transform(mean: Sequence[float], std: Sequence[float]) -> v2.Compose:
     return v2.Compose(
-        [
-            reshape_image,
-            v2.ToDtype(torch.float32, scale=True),
-            v2.Normalize((0.1307,), (0.3081,)),
-        ]
+        [reshape_image, v2.ToDtype(torch.float32, scale=True), v2.Normalize(mean, std)]
     )

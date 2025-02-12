@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from torch.utils.data import DataLoader
 
 from ailab.config import Config
 from ailab.data import create_data_module
 from ailab.data.dataset import DataModule
-from ailab.data.transform import base_transform
 from ailab.eval.logger import LoggerManager
 
 
@@ -48,6 +48,7 @@ def sample_images(data_module: DataModule, logger_manager: LoggerManager) -> Non
     # Get dataloaders
     train_loader = data_module.train_dataloader()
     label_map = data_module.data.classes
+    mean, std = mean_std(data_module)
     # Log sample images
     for batch_idx, (images, labels) in enumerate(train_loader):
         if batch_idx == 0:
@@ -68,20 +69,31 @@ def sample_images(data_module: DataModule, logger_manager: LoggerManager) -> Non
 
             # Log to wandb
             logger_manager.log_image(
-                "samples/grid", [plt.gcf()], caption=["Sample Images"]
+                f"samples/grid {mean=:.4f} {std=:.4f}",
+                [plt.gcf()],
+                caption=["Sample Images"],
             )
             plt.close()
 
             # Also log individual images with matching number of captions
             images_to_log = [img[0].numpy() for img in sample_images]
             logger_manager.log_image(
-                "samples/individual",
+                f"samples/individual {mean=:.4f} {std=:.4f}",
                 images_to_log,
                 caption=[
                     f"Class: {label_map[label.item()]}" for label in sample_labels
                 ],
             )
             break
+
+
+def mean_std(data_module: DataModule) -> tuple[float, float]:
+    dataset = data_module.data(
+        data_module.data_dir, train=True, transform=data_module.transform
+    )
+    loader = DataLoader(dataset, batch_size=len(dataset))
+    data = next(iter(loader))[0]
+    return data.mean().item(), data.std().item()
 
 
 def analyze_dataset(config: Config) -> None:
@@ -100,7 +112,7 @@ def analyze_dataset(config: Config) -> None:
         data_module = create_data_module(
             name=config.data.dataset,
             batch_size=config.data.batch_size,
-            transforms=base_transform(),
+            transform="base",
         )
 
         # Prepare and setup data

@@ -24,7 +24,6 @@ from ailab.cli import (
 )
 from ailab.config import Config, ConfigManager
 from ailab.data import create_data_module
-from ailab.data.transform import train_transform
 from ailab.eval import EDA
 from ailab.eval.logger import LoggerManager
 from ailab.model import create_model
@@ -45,9 +44,7 @@ def training(config: Config) -> None:
     ) as logger:
         # dataset
         datamodule = create_data_module(
-            name=config.data.dataset,
-            batch_size=config.data.batch_size,
-            transforms=train_transform(),
+            name=config.data.dataset, batch_size=config.data.batch_size
         )
         datamodule.prepare_data()
         datamodule.setup("fit")
@@ -77,9 +74,7 @@ def evaluation(config: Config, run_id: str) -> None:
     """
     # data
     datamodule = create_data_module(
-        name=config.data.dataset,
-        batch_size=config.data.batch_size,
-        transforms=train_transform(),
+        name=config.data.dataset, batch_size=config.data.batch_size
     )
     datamodule.prepare_data()
     datamodule.setup("test")
