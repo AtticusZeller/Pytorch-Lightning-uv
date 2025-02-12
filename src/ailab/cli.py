@@ -23,9 +23,6 @@ TrainFlag = Annotated[
     bool, typer.Option("--train", help="Train the model", is_flag=True)
 ]
 
-EvalFlag = Annotated[
-    bool, typer.Option("--eval", help="Evaluate the model", is_flag=True)
-]
 
 # Sweep options
 SweepFlag = Annotated[
@@ -47,7 +44,8 @@ SweepCount = Annotated[
     int, typer.Option("--sweep-count", help="Number of sweep runs", min=1)
 ]
 
+
 # Evaluation options
-RunID = Annotated[
-    str | None, typer.Option("--run-id", help="WandB run ID for evaluation")
+EvalFlag = Annotated[
+    str | None, typer.Option("--eval", help="WandB run ID for evaluation")
 ]

@@ -16,7 +16,6 @@ from ailab.cli import (
     ConfigPath,
     EDAFlag,
     EvalFlag,
-    RunID,
     SweepConfigPath,
     SweepCount,
     SweepFlag,
@@ -33,7 +32,7 @@ set_random_seed()
 torch.set_float32_matmul_precision("high")
 
 
-def training(config: Config) -> None:
+def training(config: Config) -> str | None:
     # logger
     with LoggerManager(
         run_name=config.logger.run_name,
@@ -63,6 +62,8 @@ def training(config: Config) -> None:
             max_epochs=config.training.max_epochs,
         )
         trainer.fit(model, datamodule)
+        run_id = logger.version
+    return run_id
 
 
 def evaluation(config: Config, run_id: str) -> None:
@@ -102,11 +103,10 @@ def main(
     config_file: ConfigPath = Path("data/train.yml"),
     eda: EDAFlag = False,
     train: TrainFlag = False,
-    eval: EvalFlag = False,
+    eval_id: EvalFlag = None,
     sweep: SweepFlag = False,
     sweep_config: SweepConfigPath = None,
     sweep_count: SweepCount = 10,
-    run_id: RunID = None,
 ) -> None:
     """
     ML Training and Evaluation CLI:
@@ -122,9 +122,10 @@ def main(
     if eda:
         EDA.analyze_dataset(config)
     elif train:
-        training(config)
-    elif eval and run_id:
-        evaluation(config, run_id)
+        if run_id := training(config):
+            evaluation(config, run_id)
+    elif eval_id:
+        evaluation(config, eval_id)
     elif sweep and sweep_config:
         sweep_id = LoggerManager.init_sweep(
             sweep_config_path=sweep_config,
@@ -143,8 +144,7 @@ def main(
             "config_file": config_file,
             "eda": eda,
             "train": train,
-            "eval": eval,
-            "run_id": run_id,
+            "eval_id": eval_id,
             "sweep": sweep,
             "sweep_config": sweep_config,
             "sweep_count": sweep_count,
