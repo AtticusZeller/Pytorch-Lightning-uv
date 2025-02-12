@@ -10,10 +10,15 @@ from rich import print
 @dataclass
 class ModelConfig:
     name: str = "MLP"
-    n_layer_1: int = 128
-    n_layer_2: int = 256
     dropout: float = 0.2
     activation: str = "relu"
+    # MLP
+    n_layer_1: int | None = None
+    n_layer_2: int | None = None
+    # CNN
+    n_channels_1: int | None = None
+    n_channels_2: int | None = None
+    n_fc_1: int | None = None
 
 
 @dataclass

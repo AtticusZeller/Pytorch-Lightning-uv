@@ -1,0 +1,13 @@
+method: bayes
+metric:
+  name: val_accuracy
+  goal: maximize
+parameters:
+  n_channels_1:
+    values: [16, 32, 64]
+  n_channels_2:
+    values: [32, 64, 128]
+  n_fc_1:
+    values: [64, 128, 256, 512]
+  batch_size:
+    values: [64, 128, 256]

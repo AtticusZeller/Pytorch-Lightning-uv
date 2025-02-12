@@ -5,13 +5,14 @@ data:
 logger:
   entity: atticux
   project: pytorch-lightning-uv
-  run_name: test_MLP_Dropout_batchnorm
+  run_name: test_CNN_Dropout_batchnorm
 model:
   activation: relu
   dropout: 0.2
-  n_layer_1: 512
-  n_layer_2: 128
-  name: MLP
+  n_channels_1: 32
+  n_channels_2: 64
+  n_fc_1: 128
+  name: CNN
 optimizer:
   lr: 0.0001
   name: adam
