@@ -15,6 +15,9 @@ class BaseModel(pl.LightningModule):
     Ref: https://colab.research.google.com/github/wandb/examples/blob/master/colabs/pytorch-lightning/Optimize_Pytorch_Lightning_models_with_Weights_%26_Biases.ipynb#scrollTo=gzaiGUAz1saI
     """
 
+    def forward(self, x: Tensor) -> Tensor:
+        raise NotImplementedError
+
     def training_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> Tensor:
         """needs to return a loss from a single batch"""
         _, loss, acc = self._get_preds_loss_accuracy(batch)
