@@ -18,7 +18,7 @@
     {
       "args": [
         "-c",
-        "config/train_mlp.yml",
+        "config/efficientnet_v2.yml",
         "--train"
       ],
       "console": "integratedTerminal",

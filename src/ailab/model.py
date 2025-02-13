@@ -1,11 +1,19 @@
+import math
 from pathlib import Path
+from typing import Literal
 
 import lightning.pytorch as pl
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn import BatchNorm1d, CrossEntropyLoss, Dropout, Linear, functional as F
-from torch.optim import Adam
+from torch.optim import Adam, Optimizer
 from torchmetrics.functional import accuracy
+from torchvision.models import (  # type: ignore
+    efficientnet_v2_l,
+    efficientnet_v2_m,
+    efficientnet_v2_s,
+)
+from torchvision.ops import Conv2dNormActivation
 
 from ailab.config import Config
 
@@ -47,7 +55,7 @@ class BaseModel(pl.LightningModule):
         self.log("test_loss", loss)
         self.log("test_accuracy", acc)
 
-    def configure_optimizers(self) -> Adam:
+    def configure_optimizers(self) -> Optimizer:
         """defines model optimizer"""
         return Adam(self.parameters(), lr=self.lr)
 
@@ -70,7 +78,7 @@ class MLP(BaseModel):
 
     def __init__(
         self,
-        n_classes: int = 10,
+        num_classes: int = 10,
         n_layer_1: int = 128,
         n_layer_2: int = 256,
         lr: float = 1e-3,
@@ -85,7 +93,7 @@ class MLP(BaseModel):
         self.layer_2 = Linear(n_layer_1, n_layer_2)
         self.bn_2 = BatchNorm1d(n_layer_2)
         self.dropout_2 = Dropout(dropout_rate)
-        self.layer_3 = Linear(n_layer_2, n_classes)
+        self.layer_3 = Linear(n_layer_2, num_classes)
 
         # loss
         self.loss = CrossEntropyLoss()
@@ -128,7 +136,7 @@ class CNN(BaseModel):
 
     def __init__(
         self,
-        n_classes: int = 10,
+        num_classes: int = 10,
         n_channels_1: int = 32,
         n_channels_2: int = 64,
         n_fc_1: int = 128,
@@ -159,7 +167,7 @@ class CNN(BaseModel):
         self.fc1 = Linear(conv_output_size, n_fc_1)
         self.bn3 = BatchNorm1d(n_fc_1)
         self.dropout3 = Dropout(dropout_rate)
-        self.fc2 = Linear(n_fc_1, n_classes)
+        self.fc2 = Linear(n_fc_1, num_classes)
 
         # loss
         self.loss = CrossEntropyLoss()
@@ -198,6 +206,94 @@ class CNN(BaseModel):
         return x
 
 
+class EfficientNetV2Transfer(BaseModel):
+    """EfficientNet transfer learning model for Fashion MNIST
+    Features:
+    - Uses pretrained EfficientNet as backbone
+    - Custom classification head
+    - Supports feature extraction and fine-tuning
+    Ref: https://lightning.ai/docs/pytorch/stable/advanced/transfer_learning.html#example-imagenet-computer-vision
+    """
+
+    def __init__(
+        self,
+        num_classes: int = 10,
+        efficient_version: Literal["s", "m", "l"] = "s",
+        lr: float = 1e-3,
+        dropout_rate: float = 0.2,
+    ) -> None:
+        super().__init__()
+
+        backbone = self._create_backbone(efficient_version)
+
+        # Extract features
+        self.feature_extractor = backbone.features
+        # Replace the first Conv2dNormActivation layer
+        first_layer = self.feature_extractor[0]
+        self.feature_extractor[0] = Conv2dNormActivation(
+            1,  # Input channels for grayscale
+            first_layer[0].out_channels,
+            kernel_size=first_layer[0].kernel_size,
+            stride=first_layer[0].stride,
+            padding=first_layer[0].padding,
+            norm_layer=first_layer[1].__class__,
+            activation_layer=first_layer[2].__class__,
+        )
+
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        # Replace the classifier
+        num_filters = backbone.classifier[1].in_features
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=dropout_rate, inplace=True),
+            nn.Linear(num_filters, num_classes),
+        )
+
+        # loss
+        self.lr = lr
+        self.loss = nn.CrossEntropyLoss()
+
+        # save hyperparameters
+        self.save_hyperparameters()
+
+        # Initialize weights
+        self._init_new_weights()
+
+    def _init_new_weights(self) -> None:
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out")
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm2d | nn.GroupNorm):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                init_range = 1.0 / math.sqrt(m.out_features)
+                nn.init.uniform_(m.weight, -init_range, init_range)
+                nn.init.zeros_(m.bias)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.feature_extractor(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
+
+    @staticmethod
+    def _create_backbone(efficient_version: Literal["s", "m", "l"] = "s"):
+        efficient_models = {
+            "s": efficientnet_v2_s,
+            "m": efficientnet_v2_m,
+            "l": efficientnet_v2_l,
+        }
+
+        if efficient_version not in efficient_models:
+            raise ValueError(f"Supported versions: {list(efficient_models.keys())}")
+
+        # Create model without pretrained weights
+        return efficient_models[efficient_version](weights=None)
+
+
 def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
     if config.model.name.lower() == "mlp":
         return (
@@ -221,6 +317,16 @@ def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
             )
             if model_path is None
             else CNN.load_from_checkpoint(model_path)
+        )
+    elif config.model.name.lower() == "efficientnet_v2":
+        return (
+            EfficientNetV2Transfer(
+                lr=config.optimizer.lr,
+                efficient_version=config.model.efficient_version or "s",
+                dropout_rate=config.model.dropout,
+            )
+            if model_path is None
+            else EfficientNetV2Transfer.load_from_checkpoint(model_path)
         )
     else:
         raise ValueError(f"Model name {config.model.name} not supported.")

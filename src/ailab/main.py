@@ -9,9 +9,10 @@ from pathlib import Path
 
 import torch
 import typer
-from lightning import Trainer
-
 import wandb
+from lightning import Trainer
+from lightning.pytorch.callbacks import RichModelSummary
+
 from ailab.cli import (
     ConfigPath,
     EDAFlag,
@@ -43,12 +44,15 @@ def training(config: Config) -> str | None:
     ) as logger:
         # dataset
         datamodule = create_data_module(
-            name=config.data.dataset, batch_size=config.data.batch_size
+            name=config.data.dataset,
+            batch_size=config.data.batch_size,
+            transform=config.data.transform,
         )
         datamodule.prepare_data()
         datamodule.setup("fit")
         # model
         model = create_model(config)
+        # model = torch.compile(model)
         # log model ckpt and gradients
         if not logger.sweeping:
             logger.watch(model, log="all")
@@ -57,7 +61,8 @@ def training(config: Config) -> str | None:
         # trainer
         trainer = Trainer(
             logger=logger,
-            callbacks=[create_rich_progress_bar()],
+            # profiler="simple",
+            callbacks=[RichModelSummary(2), create_rich_progress_bar()],
             accelerator="gpu",
             max_epochs=config.training.max_epochs,
         )
@@ -94,7 +99,10 @@ def evaluation(config: Config, run_id: str) -> None:
         model.eval()
         # trainer
         trainer = Trainer(
-            logger=logger, accelerator="gpu", callbacks=[create_rich_progress_bar()]
+            logger=logger,
+            accelerator="gpu",
+            enable_model_summary=True,
+            callbacks=[RichModelSummary(2), create_rich_progress_bar()],
         )
         trainer.test(model, datamodule)
 

@@ -1,7 +1,7 @@
 # config.py
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from rich import print
@@ -19,6 +19,8 @@ class ModelConfig:
     n_channels_1: int | None = None
     n_channels_2: int | None = None
     n_fc_1: int | None = None
+    # EfficientNet
+    efficient_version: Literal["s", "m", "l"] | None = None
 
 
 @dataclass
@@ -32,6 +34,7 @@ class DataConfig:
     dataset: str = "MNIST"
     batch_size: int = 128
     augmentation: list[str] | None = None
+    transform: Literal["standardize", "efficientnet", "base"] = "standardize"
 
 
 @dataclass
