@@ -55,17 +55,21 @@ def training(config: Config) -> str | None:
         # log model ckpt and gradients
         if not logger.sweeping:
             logger.watch(model, log="all")
-            logger.upload_best_model()
 
         # trainer
         trainer = Trainer(
             logger=logger,
             # profiler=PyTorchProfiler(),
-            callbacks=[RichModelSummary(2), create_rich_progress_bar()],
+            callbacks=[
+                RichModelSummary(2),
+                create_rich_progress_bar(),
+                logger.checkpoint_callback(),
+            ],
             accelerator="gpu",
             max_epochs=config.training.max_epochs,
         )
         trainer.fit(model, datamodule)
+
         run_id = logger.version
     return run_id
 
