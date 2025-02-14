@@ -239,7 +239,7 @@ class EfficientNetV2Transfer(BaseModel):
             norm_layer=first_layer[1].__class__,
             activation_layer=first_layer[2].__class__,
         )
-
+        # Adaptive pooling
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         # Replace the classifier
         num_filters = backbone.classifier[1].in_features
@@ -256,7 +256,7 @@ class EfficientNetV2Transfer(BaseModel):
         self.save_hyperparameters()
 
         # Initialize weights
-        self._init_new_weights()
+        # self._init_new_weights()
 
     def _init_new_weights(self) -> None:
         for m in self.modules():
@@ -271,6 +271,12 @@ class EfficientNetV2Transfer(BaseModel):
                 init_range = 1.0 / math.sqrt(m.out_features)
                 nn.init.uniform_(m.weight, -init_range, init_range)
                 nn.init.zeros_(m.bias)
+
+    def setup(self, stage: str) -> None:
+        # compile feature extractor
+        if stage == "fit":
+            self.feature_extractor = torch.compile(self.feature_extractor
+                                                   )
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.feature_extractor(x)
