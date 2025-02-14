@@ -6,12 +6,11 @@ data:
 logger:
   entity: atticux
   project: pytorch-lightning-uv
-  run_name: test_Efficientnet_V2_Fashion_MNIST_0
+  run_name: test_resnet18_Fashion_MNIST_0
 model:
   activation: relu
   dropout: 0.2
-  efficient_version: s
-  name: Efficientnet_V2
+  name: resnet18
 optimizer:
   lr: 0.0001
   name: adam

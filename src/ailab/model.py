@@ -12,8 +12,9 @@ from torchvision.models import (  # type: ignore
     efficientnet_v2_l,
     efficientnet_v2_m,
     efficientnet_v2_s,
+    resnet18,
 )
-from torchvision.ops import Conv2dNormActivation
+from torchvision.ops import Conv2dNormActivation  # type: ignore
 
 from ailab.config import Config
 
@@ -206,6 +207,52 @@ class CNN(BaseModel):
         return x
 
 
+class ResNet18Transfer(BaseModel):
+    """ResNet18 transfer learning model for Fashion MNIST
+    Features:
+    - Uses pretrained ResNet18 as backbone
+    - Custom classification head
+    - Supports feature extraction and fine-tuning
+    """
+
+    def __init__(
+        self, num_classes: int = 10, lr: float = 1e-3, dropout_rate: float = 0.2
+    ) -> None:
+        super().__init__()
+
+        # Load ResNet18 model without pretrained weights
+        self.resnet = resnet18(weights="DEFAULT")
+        # self.resnet.conv1 = nn.Conv2d(
+        #     1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+
+        self.resnet.fc = nn.Sequential(
+            nn.Dropout(p=dropout_rate),
+            nn.Linear(self.resnet.fc.in_features, num_classes),
+        )
+
+        # loss
+        self.lr = lr
+        self.loss = nn.CrossEntropyLoss()
+
+        # save hyperparameters
+        self.save_hyperparameters()
+
+        self.freeze_backbone()
+        # self.resnet = torch.compile(self.resnet)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if x.size(1) == 1:
+            x = x.repeat(1, 3, 1, 1)
+        return self.resnet(x)
+
+    def freeze_backbone(self) -> None:
+        for param in self.resnet.parameters():
+            param.requires_grad = False
+
+        for param in list(self.resnet.parameters())[:-2]:
+            param.requires_grad = True
+
+
 class EfficientNetV2Transfer(BaseModel):
     """EfficientNet transfer learning model for Fashion MNIST
     Features:
@@ -228,17 +275,6 @@ class EfficientNetV2Transfer(BaseModel):
 
         # Extract features
         self.feature_extractor = backbone.features
-        # Replace the first Conv2dNormActivation layer
-        first_layer = self.feature_extractor[0]
-        self.feature_extractor[0] = Conv2dNormActivation(
-            1,  # Input channels for grayscale
-            first_layer[0].out_channels,
-            kernel_size=first_layer[0].kernel_size,
-            stride=first_layer[0].stride,
-            padding=first_layer[0].padding,
-            norm_layer=first_layer[1].__class__,
-            activation_layer=first_layer[2].__class__,
-        )
         # Adaptive pooling
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         # Replace the classifier
@@ -272,13 +308,15 @@ class EfficientNetV2Transfer(BaseModel):
                 nn.init.uniform_(m.weight, -init_range, init_range)
                 nn.init.zeros_(m.bias)
 
-    def setup(self, stage: str) -> None:
-        # compile feature extractor
-        if stage == "fit":
-            self.feature_extractor = torch.compile(self.feature_extractor
-                                                   )
+    # def setup(self, stage: str) -> None:
+    #     # compile feature extractor
+    #     if stage == "fit":
+    #         self.feature_extractor = torch.compile(self.feature_extractor
+    #                                                )
 
     def forward(self, x: Tensor) -> Tensor:
+        if x.size(1) == 1:
+            x = x.repeat(1, 3, 1, 1)
         x = self.feature_extractor(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
@@ -324,6 +362,12 @@ def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
             if model_path is None
             else CNN.load_from_checkpoint(model_path)
         )
+    elif config.model.name.lower() == "resnet18":
+        return (
+            ResNet18Transfer(lr=config.optimizer.lr, dropout_rate=config.model.dropout)
+            if model_path is None
+            else ResNet18Transfer.load_from_checkpoint(model_path)
+        )
     elif config.model.name.lower() == "efficientnet_v2":
         return (
             EfficientNetV2Transfer(
@@ -334,5 +378,6 @@ def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
             if model_path is None
             else EfficientNetV2Transfer.load_from_checkpoint(model_path)
         )
+
     else:
         raise ValueError(f"Model name {config.model.name} not supported.")
