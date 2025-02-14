@@ -1,17 +1,5 @@
-import random
-
-import numpy as np
-import torch
 from lightning.pytorch.callbacks import RichProgressBar
 from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
-
-
-def set_random_seed(seed: int = 42) -> None:
-    """Ensure deterministic behavior."""
-    torch.backends.cudnn.deterministic = True
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
 
 
 def create_rich_progress_bar() -> RichProgressBar:

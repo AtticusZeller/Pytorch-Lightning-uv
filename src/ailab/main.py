@@ -9,10 +9,10 @@ from pathlib import Path
 
 import torch
 import typer
-from lightning import Trainer
+import wandb
+from lightning import Trainer, seed_everything
 from lightning.pytorch.callbacks import RichModelSummary
 
-import wandb
 from ailab.cli import (
     ConfigPath,
     EDAFlag,
@@ -27,9 +27,9 @@ from ailab.data import create_data_module
 from ailab.eval import EDA
 from ailab.eval.logger import LoggerManager
 from ailab.model import create_model
-from ailab.utils import create_rich_progress_bar, set_random_seed
+from ailab.utils import create_rich_progress_bar
 
-set_random_seed()
+seed_everything(42, workers=True)
 torch.set_float32_matmul_precision("high")
 
 

@@ -3,15 +3,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 import wandb
+from lightning import seed_everything
+
 from ailab.config import Config, ConfigManager
-from ailab.utils import set_random_seed
 
 
 @pytest.fixture(scope="session")
 def set_seed() -> Generator[None, Any, None]:
-    set_random_seed()
+    seed_everything(42, workers=True)
     yield
 
 
