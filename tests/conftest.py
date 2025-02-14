@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-import wandb
 
+import wandb
 from ailab.config import Config, ConfigManager
 from ailab.utils import set_random_seed
 
