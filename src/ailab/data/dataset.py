@@ -227,7 +227,7 @@ class DataModule(L.LightningDataModule):
             num_workers=15,
             persistent_workers=True,
             prefetch_factor=20,
-            drop_last=True,  # avoid compile error because of different batch size
+            # drop_last=True,  # avoid compile error because of different batch size
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -239,7 +239,7 @@ class DataModule(L.LightningDataModule):
             num_workers=15,
             persistent_workers=True,
             prefetch_factor=20,
-            drop_last=True,  # avoid compile error because of different batch size
+            # drop_last=True,  # avoid compile error because of different batch size
         )
 
     def test_dataloader(self) -> DataLoader:
