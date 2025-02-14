@@ -205,7 +205,7 @@ class DataModule(L.LightningDataModule):
         self.transform = transforms
         self.data = data
 
-    def setup(self, stage: str):
+    def setup(self, stage: str) -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             full_data = self.data(self.data_dir, train=True, transform=self.transform)
@@ -227,6 +227,7 @@ class DataModule(L.LightningDataModule):
             num_workers=15,
             persistent_workers=True,
             prefetch_factor=20,
+            drop_last=True,  # avoid compile error because of different batch size
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -238,6 +239,7 @@ class DataModule(L.LightningDataModule):
             num_workers=15,
             persistent_workers=True,
             prefetch_factor=20,
+            drop_last=True,  # avoid compile error because of different batch size
         )
 
     def test_dataloader(self) -> DataLoader:
