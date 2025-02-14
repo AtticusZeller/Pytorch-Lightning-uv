@@ -34,7 +34,7 @@ class DataConfig:
     dataset: str = "MNIST"
     batch_size: int = 128
     augmentation: list[str] | None = None
-    transform: Literal["standardize", "efficientnet", "base"] = "standardize"
+    transform: Literal["standardize", "base"] = "standardize"
 
 
 @dataclass
