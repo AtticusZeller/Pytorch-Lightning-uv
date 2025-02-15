@@ -14,7 +14,6 @@ from torchvision.models import (  # type: ignore
     efficientnet_v2_s,
     resnet18,
 )
-from torchvision.ops import Conv2dNormActivation  # type: ignore
 
 from ailab.config import Config
 
@@ -222,8 +221,6 @@ class ResNet18Transfer(BaseModel):
 
         # Load ResNet18 model without pretrained weights
         self.resnet = resnet18(weights="DEFAULT")
-        # self.resnet.conv1 = nn.Conv2d(
-        #     1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
         self.resnet.fc = nn.Sequential(
             nn.Dropout(p=dropout_rate),
@@ -249,7 +246,7 @@ class ResNet18Transfer(BaseModel):
         for param in self.resnet.parameters():
             param.requires_grad = False
 
-        for param in list(self.resnet.parameters())[:-2]:
+        for param in list(self.resnet.parameters())[:-1]:
             param.requires_grad = True
 
 
