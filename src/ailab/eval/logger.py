@@ -2,7 +2,6 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Self
 
-import wandb
 import yaml
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
@@ -10,6 +9,7 @@ from rich import print
 from rich.pretty import pprint
 from torch import nn
 
+import wandb
 from ailab.config import (
     Config,
     DataConfig,
@@ -23,8 +23,9 @@ class LoggerManager(WandbLogger):
     """
     Initialize the Weights & Biases logging.
     ```bash
-    wandb login --relogin --host=https://wandb.atticux.me
+    wandb login --relogin --host=http://server_ip:server_port
     ```
+    NOTE: https has bugs on uploading large artifacts
     Ref:
         1. https://docs.wandb.ai/ref/python/init/
         2. https://docs.wandb.ai/guides/integrations/lightning/
@@ -40,7 +41,6 @@ class LoggerManager(WandbLogger):
         id: str | None = None,
         log_model: bool = True,
         job_type: str = "train",
-        base_url: str = "http://137.184.125.132:8888",
     ) -> None:
         Path("./logs").mkdir(parents=True, exist_ok=True)
         super().__init__(
@@ -56,7 +56,6 @@ class LoggerManager(WandbLogger):
             save_dir="./logs",
             log_model=log_model,  # log model artifacts while Trainer callbacks
             # offline=True,
-            settings=wandb.Settings(base_url=base_url),
         )
         self.entity = entity
         self.job_type = job_type
