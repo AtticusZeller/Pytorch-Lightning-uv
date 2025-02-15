@@ -1,6 +1,6 @@
 data:
   augmentation: null
-  transform: standardize
+  transform: imagenet
   batch_size: 128
   dataset: Fashion MNIST
 logger:

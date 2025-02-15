@@ -78,3 +78,16 @@ def standardize_transform(mean: Sequence[float], std: Sequence[float]) -> v2.Com
     return v2.Compose(
         [reshape_image, v2.ToDtype(torch.float32, scale=True), v2.Normalize(mean, std)]
     )
+
+
+def imagenet_transform() -> v2.Compose:
+    return v2.Compose(
+        [
+            reshape_image,
+            v2.Resize(256),
+            v2.CenterCrop(224),
+            v2.Grayscale(num_output_channels=3),
+            v2.ToDtype(torch.float32, scale=True),
+            # v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
