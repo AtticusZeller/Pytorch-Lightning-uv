@@ -244,7 +244,7 @@ class ResNet18Transfer(BaseModel):
         for param in self.resnet.parameters():
             param.requires_grad = False
 
-        for param in list(self.resnet.parameters())[:-1]:
+        for param in list(self.resnet.parameters())[:-3]:
             param.requires_grad = True
 
 
