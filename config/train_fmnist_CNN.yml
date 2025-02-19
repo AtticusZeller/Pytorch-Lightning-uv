@@ -1,11 +1,12 @@
 data:
   augmentation: null
+  transform: standardize
   batch_size: 128
   dataset: Fashion MNIST
 logger:
   entity: atticux
   project: pytorch-lightning-uv
-  run_name: CNN_Dropout_batchnorm_sweep
+  run_name: CNN_Dropout_batchnorm
 model:
   activation: relu
   dropout: 0.2

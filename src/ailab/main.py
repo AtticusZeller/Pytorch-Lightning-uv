@@ -83,7 +83,9 @@ def evaluation(config: Config, run_id: str) -> None:
     """
     # data
     datamodule = create_data_module(
-        name=config.data.dataset, batch_size=config.data.batch_size,transform=config.data.transform
+        name=config.data.dataset,
+        batch_size=config.data.batch_size,
+        transform=config.data.transform,
     )
     datamodule.prepare_data()
     datamodule.setup("test")
