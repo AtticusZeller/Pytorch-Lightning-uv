@@ -204,6 +204,7 @@ class DataModule(L.LightningDataModule):
 
         self.transform = transforms
         self.data = data
+        self.num_workers = 8
 
     def setup(self, stage: str) -> None:
         # Assign train/val datasets for use in dataloaders
@@ -224,9 +225,8 @@ class DataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             pin_memory=True,
             shuffle=True,
-            num_workers=15,
+            num_workers=self.num_workers,
             persistent_workers=True,
-            prefetch_factor=20,
             # drop_last=True,  # avoid compile error because of different batch size
         )
 
@@ -236,16 +236,18 @@ class DataModule(L.LightningDataModule):
             self.val_data,
             batch_size=self.batch_size,
             pin_memory=True,
-            num_workers=15,
+            num_workers=self.num_workers,
             persistent_workers=True,
-            prefetch_factor=20,
             # drop_last=True,  # avoid compile error because of different batch size
         )
 
     def test_dataloader(self) -> DataLoader:
         """This is the dataloader that the Trainer test() method uses."""
         return DataLoader(
-            self.test_data, pin_memory=True, batch_size=self.batch_size, num_workers=15
+            self.test_data,
+            pin_memory=True,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
         )
 
     def prepare_data(self) -> None:
