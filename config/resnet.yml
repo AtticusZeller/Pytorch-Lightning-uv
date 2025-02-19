@@ -6,7 +6,7 @@ data:
 logger:
   entity: atticux
   project: pytorch-lightning-uv
-  run_name: test_resnet18_Fashion_MNIST_finetune-1
+  run_name: resnet18_Fashion_MNIST_finetune-1
 model:
   activation: relu
   dropout: 0.2

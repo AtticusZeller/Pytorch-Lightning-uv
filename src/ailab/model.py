@@ -238,8 +238,6 @@ class ResNet18Transfer(BaseModel):
         # self.resnet = torch.compile(self.resnet)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if x.size(1) == 1:
-            x = x.repeat(1, 3, 1, 1)
         return self.resnet(x)
 
     def freeze_backbone(self) -> None:
