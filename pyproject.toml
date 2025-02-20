@@ -24,12 +24,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "ruff>=0.6.3",                   # Linting
-    "mypy>=1.11.2",                  # Type checking
-    "pre-commit>=3.8.0",             # Pre-commit hooks
-    "pytest>=8.3.2",                 # Testing framework
-    "pytest-sugar>=1.0.0",           # Nicer pytest output
+    "ruff>=0.6.3", # Linting
+    "mypy>=1.11.2", # Type checking
+    "pre-commit>=3.8.0", # Pre-commit hooks
+    "pytest>=8.3.2", # Testing framework
+    "pytest-sugar>=1.0.0", # Nicer pytest output
     "types-pyyaml>=6.0.12.20241230",
+    "git-cliff>=2.8.0",
 ]
 
 [tool.uv.sources]
