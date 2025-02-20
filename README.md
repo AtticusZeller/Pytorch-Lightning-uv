@@ -43,7 +43,7 @@ uv sync --dev
 Explore and analyze your dataset with built-in EDA tools:
 
 ```bash
-python -m ailab.main -c config/train_mlp_dropout.yml --eda
+python -m ailab.main -c config/resnet.yml --eda
 ```
 
 <details>
@@ -58,7 +58,7 @@ python -m ailab.main -c config/train_mlp_dropout.yml --eda
 Start training your model with a single command:
 
 ```bash
-python -m ailab.main -c config/train_mlp_dropout.yml --train
+python -m ailab.main -c config/resnet.yml --train
 ```
 
 <details>
@@ -87,7 +87,7 @@ python -m ailab.main -c config/train_mlp_dropout.yml --train
 Evaluate your trained model:
 
 ```bash
-python -m ailab.main -c config/train_mlp_dropout.yml --eval --run-id n8fjnlyi
+python -m ailab.main -c config/resnet.yml --eval --run-id n8fjnlyi
 ```
 
 <details>
@@ -102,7 +102,7 @@ python -m ailab.main -c config/train_mlp_dropout.yml --eval --run-id n8fjnlyi
 Optimize your model with W&B Sweeps:
 
 ```bash
-python -m ailab.main -c config/train_mlp_dropout.yml --sweep --sweep-config config/sweep/mlp.yml
+python -m ailab.main -c config/resnet.yml --sweep --sweep-config config/sweep/mlp.yml
 ```
 
 <details>
