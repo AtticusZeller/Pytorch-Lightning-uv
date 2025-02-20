@@ -6,12 +6,21 @@ data:
 logger:
   entity: atticux
   project: pytorch-lightning-uv
-  run_name: Efficientnet_V2_Fashion_MNIST_finetune-1
+  run_name: Efficientnet_V2_Fashion_MNIST
 model:
   activation: relu
   dropout: 0.2
   efficient_version: s
   name: Efficientnet_V2
+  unfreeze_layers:
+    - "features.1"
+    - "features.2"
+    - "features.3"
+    - "features.4"
+    - "features.5"
+    - "features.6"
+    - "features.7"
+    - "classifier"
 optimizer:
   lr: 0.0001
   name: adam

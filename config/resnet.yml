@@ -6,11 +6,16 @@ data:
 logger:
   entity: atticux
   project: pytorch-lightning-uv
-  run_name: resnet18_Fashion_MNIST_finetune-3
+  run_name: resnet18_Fashion_MNIST
 model:
-  activation: relu
-  dropout: 0.2
   name: resnet18
+  unfreeze_layers:
+    - layer1
+    - layer2
+    - layer3
+    - layer4
+    - fc
+
 optimizer:
   lr: 0.0001
   name: adam

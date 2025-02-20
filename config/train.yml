@@ -17,6 +17,7 @@ model:
   n_layer_1: null
   n_layer_2: null
   name: MLP
+  unfreeze_layers: null
 optimizer:
   lr: 0.0001
   name: adam

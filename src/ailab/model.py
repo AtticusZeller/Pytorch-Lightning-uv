@@ -3,6 +3,7 @@ from typing import Literal
 
 import lightning.pytorch as pl
 import torch
+from rich import print
 from torch import Tensor, nn
 from torch.nn import BatchNorm1d, CrossEntropyLoss, Dropout, Linear, functional as F
 from torch.optim import Adam, Optimizer
@@ -205,7 +206,39 @@ class CNN(BaseModel):
         return x
 
 
-class ResNet18Transfer(BaseModel):
+class FineTuneBaseModel(BaseModel):
+    def freeze_except(self, trainable: list[str], debug: bool = False) -> None:
+        """freeze all layers except the ones specified in trainable
+
+        Parameters
+        ----------
+        trainable : list[str]
+            list of layer names to be unfrozen
+        debug : bool, optional
+            print all finetune layers, by default False
+        """
+        # Freeze all layers
+        for _, param in self.model.named_parameters():
+            param.requires_grad = False
+        # Unfreeze the layers
+        fine_tune_params = []
+        fine_tune_layers = set()
+        for module_name, module in self.model.named_modules():
+            if module_name in trainable:
+                fine_tune_layers.add(module_name)
+                for name, param in module.named_parameters():
+                    param.requires_grad = True
+                    fine_tune_params.append(module_name + "." + name)
+        print(f"Fine-tuning {len(fine_tune_layers)} layers:")
+        layers = list(fine_tune_layers)
+        layers.sort()
+        print(layers)
+        if debug:
+            print(f"Fine-tuning {len(fine_tune_params)} paras:")
+            print(fine_tune_params)
+
+
+class ResNet18Transfer(FineTuneBaseModel):
     """ResNet18 transfer learning model for Fashion MNIST
     Features:
     - Uses pretrained ResNet18 as backbone
@@ -214,16 +247,20 @@ class ResNet18Transfer(BaseModel):
     """
 
     def __init__(
-        self, num_classes: int = 10, lr: float = 1e-3, dropout_rate: float = 0.2
+        self,
+        num_classes: int = 10,
+        lr: float = 1e-3,
+        dropout_rate: float = 0.2,
+        unfreeze_layers: list[str] | None = None,
     ) -> None:
         super().__init__()
 
         # Load ResNet18 model without pretrained weights
-        self.resnet = resnet18(weights="DEFAULT")
+        self.model = resnet18(weights="DEFAULT")
 
-        self.resnet.fc = nn.Sequential(
+        self.model.fc = nn.Sequential(
             nn.Dropout(p=dropout_rate),
-            nn.Linear(self.resnet.fc.in_features, num_classes),
+            nn.Linear(self.model.fc.in_features, num_classes),
         )
 
         # loss
@@ -232,22 +269,15 @@ class ResNet18Transfer(BaseModel):
 
         # save hyperparameters
         self.save_hyperparameters()
-
-        self.freeze_backbone()
+        if unfreeze_layers is not None:
+            self.freeze_except(unfreeze_layers)
         # self.resnet = torch.compile(self.resnet)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.resnet(x)
-
-    def freeze_backbone(self) -> None:
-        for param in self.resnet.parameters():
-            param.requires_grad = False
-
-        for param in list(self.resnet.parameters())[:-3]:
-            param.requires_grad = True
+        return self.model(x)
 
 
-class EfficientNetV2Transfer(BaseModel):
+class EfficientNetV2Transfer(FineTuneBaseModel):
     """EfficientNet transfer learning model for Fashion MNIST
     Features:
     - Uses pretrained EfficientNet as backbone
@@ -262,6 +292,7 @@ class EfficientNetV2Transfer(BaseModel):
         efficient_version: Literal["s", "m", "l"] = "s",
         lr: float = 1e-3,
         dropout_rate: float = 0.2,
+        unfreeze_layers: list[str] | None = None,
     ) -> None:
         super().__init__()
 
@@ -280,18 +311,11 @@ class EfficientNetV2Transfer(BaseModel):
 
         # save hyperparameters
         self.save_hyperparameters()
-
-        self.freeze_backbone()
+        if unfreeze_layers is not None:
+            self.freeze_except(unfreeze_layers)
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)
-
-    def freeze_backbone(self) -> None:
-        for param in self.model.parameters():
-            param.requires_grad = False
-
-        for param in list(self.model.parameters())[:-1]:
-            param.requires_grad = True
 
     @staticmethod
     def _create_backbone(efficient_version: Literal["s", "m", "l"] = "s"):
@@ -334,7 +358,11 @@ def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
         )
     elif config.model.name.lower() == "resnet18":
         return (
-            ResNet18Transfer(lr=config.optimizer.lr, dropout_rate=config.model.dropout)
+            ResNet18Transfer(
+                lr=config.optimizer.lr,
+                dropout_rate=config.model.dropout,
+                unfreeze_layers=config.model.unfreeze_layers,
+            )
             if model_path is None
             else ResNet18Transfer.load_from_checkpoint(model_path)
         )
@@ -344,6 +372,7 @@ def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
                 lr=config.optimizer.lr,
                 efficient_version=config.model.efficient_version or "s",
                 dropout_rate=config.model.dropout,
+                unfreeze_layers=config.model.unfreeze_layers,
             )
             if model_path is None
             else EfficientNetV2Transfer.load_from_checkpoint(model_path)

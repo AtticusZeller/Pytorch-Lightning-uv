@@ -63,7 +63,7 @@ def training(config: Config) -> str | None:
             logger=logger,
             # profiler=PyTorchProfiler(),
             callbacks=[
-                RichModelSummary(2),
+                RichModelSummary(3),  # print model structure
                 create_rich_progress_bar(),
                 logger.checkpoint_callback(),
             ],
@@ -109,7 +109,7 @@ def evaluation(config: Config, run_id: str) -> None:
             logger=logger,
             accelerator="gpu",
             enable_model_summary=True,
-            callbacks=[RichModelSummary(2), create_rich_progress_bar()],
+            callbacks=[RichModelSummary(3), create_rich_progress_bar()],
         )
         trainer.test(model, datamodule)
 

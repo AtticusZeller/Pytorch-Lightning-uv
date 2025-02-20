@@ -11,7 +11,7 @@ from rich import print
 class ModelConfig:
     name: str = "MLP"
     dropout: float = 0.2
-    activation: str = "relu"
+    activation: str | None = None
     # MLP
     n_layer_1: int | None = None
     n_layer_2: int | None = None
@@ -21,6 +21,8 @@ class ModelConfig:
     n_fc_1: int | None = None
     # EfficientNet
     efficient_version: Literal["s", "m", "l"] | None = None
+    # Fine-tuning
+    unfreeze_layers: list[str] | None = None
 
 
 @dataclass
