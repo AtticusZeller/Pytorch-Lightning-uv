@@ -1,4 +1,3 @@
-import math
 from pathlib import Path
 from typing import Literal
 
@@ -266,15 +265,11 @@ class EfficientNetV2Transfer(BaseModel):
     ) -> None:
         super().__init__()
 
-        backbone = self._create_backbone(efficient_version)
+        self.model = self._create_backbone(efficient_version)
 
-        # Extract features
-        self.feature_extractor = backbone.features
-        # Adaptive pooling
-        self.avgpool = nn.AdaptiveAvgPool2d(1)
         # Replace the classifier
-        num_filters = backbone.classifier[1].in_features
-        self.classifier = nn.Sequential(
+        num_filters = self.model.classifier[1].in_features
+        self.model.classifier = nn.Sequential(
             nn.Dropout(p=dropout_rate, inplace=True),
             nn.Linear(num_filters, num_classes),
         )
@@ -286,37 +281,17 @@ class EfficientNetV2Transfer(BaseModel):
         # save hyperparameters
         self.save_hyperparameters()
 
-        # Initialize weights
-        # self._init_new_weights()
-
-    def _init_new_weights(self) -> None:
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out")
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.BatchNorm2d | nn.GroupNorm):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.Linear):
-                init_range = 1.0 / math.sqrt(m.out_features)
-                nn.init.uniform_(m.weight, -init_range, init_range)
-                nn.init.zeros_(m.bias)
-
-    # def setup(self, stage: str) -> None:
-    #     # compile feature extractor
-    #     if stage == "fit":
-    #         self.feature_extractor = torch.compile(self.feature_extractor
-    #                                                )
+        self.freeze_backbone()
 
     def forward(self, x: Tensor) -> Tensor:
-        if x.size(1) == 1:
-            x = x.repeat(1, 3, 1, 1)
-        x = self.feature_extractor(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.classifier(x)
-        return x
+        return self.model(x)
+
+    def freeze_backbone(self) -> None:
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        for param in list(self.model.parameters())[:-1]:
+            param.requires_grad = True
 
     @staticmethod
     def _create_backbone(efficient_version: Literal["s", "m", "l"] = "s"):
@@ -329,8 +304,8 @@ class EfficientNetV2Transfer(BaseModel):
         if efficient_version not in efficient_models:
             raise ValueError(f"Supported versions: {list(efficient_models.keys())}")
 
-        # Create model without pretrained weights
-        return efficient_models[efficient_version](weights=None)
+        # Create model with pretrained weights
+        return efficient_models[efficient_version](weights="DEFAULT")
 
 
 def create_model(config: Config, model_path: Path | None = None) -> BaseModel:

@@ -1,12 +1,12 @@
 data:
   augmentation: null
-  transform: standardize
+  transform: imagenet
   batch_size: 128
   dataset: Fashion MNIST
 logger:
   entity: atticux
   project: pytorch-lightning-uv
-  run_name: test_Efficientnet_V2_Fashion_MNIST_0
+  run_name: Efficientnet_V2_Fashion_MNIST_finetune-1
 model:
   activation: relu
   dropout: 0.2
@@ -18,5 +18,5 @@ optimizer:
 training:
   accumulate_grad_batches: null
   gradient_clip_val: null
-  max_epochs: 10
+  max_epochs: 6
   precision: null
