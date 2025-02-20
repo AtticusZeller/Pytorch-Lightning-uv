@@ -1,7 +1,7 @@
 data:
   augmentation: null
-  transform: imagenet
-  batch_size: 128
+  transform: efficientnetv2_pt
+  batch_size: 64
   dataset: Fashion MNIST
 logger:
   entity: atticux
@@ -13,13 +13,7 @@ model:
   efficient_version: s
   name: Efficientnet_V2
   unfreeze_layers:
-    - "features.1"
-    - "features.2"
-    - "features.3"
-    - "features.4"
-    - "features.5"
-    - "features.6"
-    - "features.7"
+    - "blocks"
     - "classifier"
 optimizer:
   lr: 0.0001

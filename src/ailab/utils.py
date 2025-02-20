@@ -1,5 +1,9 @@
 from lightning.pytorch.callbacks import RichProgressBar
 from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
+from rich import print
+from timm.data.config import resolve_data_config
+from timm.data.transforms_factory import create_transform
+from torch import nn
 from torch.utils.data import DataLoader
 
 from ailab.data.dataset import DataModule
@@ -32,3 +36,10 @@ def mean_std(data_module: DataModule) -> tuple[float, float]:
 
     data = next(iter(loader))[0]
     return data.mean().item(), data.std().item()
+
+
+def check_transform(model: nn.Module) -> None:
+    config = resolve_data_config({}, model=model)
+    transform = create_transform(**config)
+    print(config)
+    print(transform)

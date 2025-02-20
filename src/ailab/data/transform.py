@@ -5,6 +5,7 @@ import torchvision.transforms.v2 as v2
 from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
 from kornia.image.base import ColorSpace
 from torch import Tensor
+from torchvision.transforms import InterpolationMode
 
 # def create_augmentation_pipeline(image_size=224) -> v2.Compose:
 #     """
@@ -80,14 +81,37 @@ def standardize_transform(mean: Sequence[float], std: Sequence[float]) -> v2.Com
     )
 
 
-def imagenet_transform() -> v2.Compose:
+def resnet_pt_transform() -> v2.Compose:
     return v2.Compose(
         [
             reshape_image,
             v2.Grayscale(num_output_channels=3),
-            v2.Resize(256),
+            v2.Resize(
+                235,
+                interpolation=InterpolationMode.BICUBIC,
+                max_size=None,
+                antialias=True,
+            ),
             v2.CenterCrop(224),
             v2.ToDtype(torch.float32, scale=True),
             v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+
+def efficientnetv2_pt_transform() -> v2.Compose:
+    return v2.Compose(
+        [
+            reshape_image,
+            v2.Grayscale(num_output_channels=3),
+            v2.Resize(
+                300,
+                interpolation=InterpolationMode.BICUBIC,
+                max_size=None,
+                antialias=True,
+            ),
+            v2.CenterCrop(300),
+            v2.ToDtype(torch.float32, scale=True),
+            v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ]
     )

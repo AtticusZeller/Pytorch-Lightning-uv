@@ -2,20 +2,16 @@ from pathlib import Path
 from typing import Literal
 
 import lightning.pytorch as pl
+import timm
 import torch
 from rich import print
 from torch import Tensor, nn
 from torch.nn import BatchNorm1d, CrossEntropyLoss, Dropout, Linear, functional as F
 from torch.optim import Adam, Optimizer
 from torchmetrics.functional import accuracy
-from torchvision.models import (  # type: ignore
-    efficientnet_v2_l,
-    efficientnet_v2_m,
-    efficientnet_v2_s,
-    resnet18,
-)
 
 from ailab.config import Config
+from ailab.utils import check_transform
 
 
 class BaseModel(pl.LightningModule):
@@ -250,19 +246,15 @@ class ResNet18Transfer(FineTuneBaseModel):
         self,
         num_classes: int = 10,
         lr: float = 1e-3,
-        dropout_rate: float = 0.2,
         unfreeze_layers: list[str] | None = None,
     ) -> None:
         super().__init__()
 
         # Load ResNet18 model without pretrained weights
-        self.model = resnet18(weights="DEFAULT")
-
-        self.model.fc = nn.Sequential(
-            nn.Dropout(p=dropout_rate),
-            nn.Linear(self.model.fc.in_features, num_classes),
+        self.model = timm.create_model(
+            "resnet18", pretrained=True, num_classes=num_classes
         )
-
+        # check_transform(self.model)
         # loss
         self.lr = lr
         self.loss = nn.CrossEntropyLoss()
@@ -291,20 +283,16 @@ class EfficientNetV2Transfer(FineTuneBaseModel):
         num_classes: int = 10,
         efficient_version: Literal["s", "m", "l"] = "s",
         lr: float = 1e-3,
-        dropout_rate: float = 0.2,
         unfreeze_layers: list[str] | None = None,
     ) -> None:
         super().__init__()
 
-        self.model = self._create_backbone(efficient_version)
-
-        # Replace the classifier
-        num_filters = self.model.classifier[1].in_features
-        self.model.classifier = nn.Sequential(
-            nn.Dropout(p=dropout_rate, inplace=True),
-            nn.Linear(num_filters, num_classes),
+        self.model = timm.create_model(
+            f"tf_efficientnetv2_{efficient_version}",
+            pretrained=True,
+            num_classes=num_classes,
         )
-
+        check_transform(self.model)
         # loss
         self.lr = lr
         self.loss = nn.CrossEntropyLoss()
@@ -316,20 +304,6 @@ class EfficientNetV2Transfer(FineTuneBaseModel):
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)
-
-    @staticmethod
-    def _create_backbone(efficient_version: Literal["s", "m", "l"] = "s"):
-        efficient_models = {
-            "s": efficientnet_v2_s,
-            "m": efficientnet_v2_m,
-            "l": efficientnet_v2_l,
-        }
-
-        if efficient_version not in efficient_models:
-            raise ValueError(f"Supported versions: {list(efficient_models.keys())}")
-
-        # Create model with pretrained weights
-        return efficient_models[efficient_version](weights="DEFAULT")
 
 
 def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
@@ -359,9 +333,7 @@ def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
     elif config.model.name.lower() == "resnet18":
         return (
             ResNet18Transfer(
-                lr=config.optimizer.lr,
-                dropout_rate=config.model.dropout,
-                unfreeze_layers=config.model.unfreeze_layers,
+                lr=config.optimizer.lr, unfreeze_layers=config.model.unfreeze_layers
             )
             if model_path is None
             else ResNet18Transfer.load_from_checkpoint(model_path)
@@ -371,7 +343,6 @@ def create_model(config: Config, model_path: Path | None = None) -> BaseModel:
             EfficientNetV2Transfer(
                 lr=config.optimizer.lr,
                 efficient_version=config.model.efficient_version or "s",
-                dropout_rate=config.model.dropout,
                 unfreeze_layers=config.model.unfreeze_layers,
             )
             if model_path is None

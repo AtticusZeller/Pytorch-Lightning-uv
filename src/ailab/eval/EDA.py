@@ -99,7 +99,7 @@ def analyze_dataset(config: Config) -> None:
         data_module = create_data_module(
             name=config.data.dataset,
             batch_size=config.data.batch_size,
-            transform="imagenet",
+            transform="resnet_pt",
         )
 
         # Prepare and setup data

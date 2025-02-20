@@ -1,6 +1,6 @@
 data:
   augmentation: null
-  transform: imagenet
+  transform: resnet_pt
   batch_size: 128
   dataset: Fashion MNIST
 logger:
