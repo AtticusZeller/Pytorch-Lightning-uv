@@ -12,6 +12,7 @@ import typer
 import wandb
 from lightning import Trainer, seed_everything
 from lightning.pytorch.callbacks import RichModelSummary
+from rich.console import Console
 
 from ailab.cli import (
     ConfigPath,
@@ -31,6 +32,7 @@ from ailab.utils import create_rich_progress_bar
 
 seed_everything(42, workers=True)
 torch.set_float32_matmul_precision("high")
+console = Console()
 
 
 def training(config: Config) -> str | None:
@@ -135,8 +137,13 @@ def main(
     if eda:
         EDA.analyze_dataset(config)
     elif train:
-        if run_id := training(config):
-            evaluation(config, run_id)
+        try:
+            run_id = training(config)
+        except Exception:
+            console.print_exception(max_frames=1)
+        else:
+            if run_id:
+                evaluation(config, run_id)
     elif eval_id:
         evaluation(config, eval_id)
     elif sweep and sweep_config:

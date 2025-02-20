@@ -2,6 +2,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Self
 
+import wandb
 import yaml
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
@@ -9,7 +10,6 @@ from rich import print
 from rich.pretty import pprint
 from torch import nn
 
-import wandb
 from ailab.config import (
     Config,
     DataConfig,
