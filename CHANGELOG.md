@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.1.0 - 2025-02-20
+## 0.2.1 - 2025-02-20
+
+### 🐛 Bug Fixes
+
+- Git-cliff deps
+
+## 0.2.0 - 2025-02-20
 
 ### 🚀 Features
 
