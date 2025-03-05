@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from ailab.config import (
+from expt.config import (
     Config,
     ConfigManager,
     DataConfig,

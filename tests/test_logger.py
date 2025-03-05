@@ -1,7 +1,7 @@
 from dataclasses import asdict
 
-from ailab.config import Config
-from ailab.eval.logger import LoggerManager
+from expt.config import Config
+from expt.eval.logger import LoggerManager
 
 
 def test_wandb_logger_init(train_config: Config, cleanup_wandb: None) -> None:

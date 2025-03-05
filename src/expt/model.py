@@ -10,8 +10,8 @@ from torch.nn import BatchNorm1d, CrossEntropyLoss, Dropout, Linear, functional 
 from torch.optim import Adam, Optimizer
 from torchmetrics.functional import accuracy
 
-from ailab.config import Config
-from ailab.utils import check_transform
+from expt.config import Config
+from expt.utils import check_transform
 
 
 class BaseModel(pl.LightningModule):

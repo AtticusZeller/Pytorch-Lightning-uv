@@ -10,13 +10,7 @@ from rich import print
 from rich.pretty import pprint
 from torch import nn
 
-from ailab.config import (
-    Config,
-    DataConfig,
-    ModelConfig,
-    OptimizerConfig,
-    TrainingConfig,
-)
+from expt.config import Config, DataConfig, ModelConfig, OptimizerConfig, TrainingConfig
 
 
 class LoggerManager(WandbLogger):

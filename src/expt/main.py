@@ -14,7 +14,7 @@ from lightning import Trainer, seed_everything
 from lightning.pytorch.callbacks import RichModelSummary
 from rich.console import Console
 
-from ailab.cli import (
+from expt.cli import (
     ConfigPath,
     EDAFlag,
     EvalFlag,
@@ -23,12 +23,12 @@ from ailab.cli import (
     SweepFlag,
     TrainFlag,
 )
-from ailab.config import Config, ConfigManager
-from ailab.data import create_data_module
-from ailab.eval import EDA
-from ailab.eval.logger import LoggerManager
-from ailab.model import create_model
-from ailab.utils import create_rich_progress_bar
+from expt.config import Config, ConfigManager
+from expt.data import create_data_module
+from expt.eval import EDA
+from expt.eval.logger import LoggerManager
+from expt.model import create_model
+from expt.utils import create_rich_progress_bar
 
 seed_everything(42, workers=True)
 torch.set_float32_matmul_precision("high")

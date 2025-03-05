@@ -2,9 +2,9 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2 as v2
 
-from ailab.data import create_data_module
-from ailab.data.dataset import MNIST
-from ailab.data.transform import reshape_image
+from expt.data import create_data_module
+from expt.data.dataset import MNIST
+from expt.data.transform import reshape_image
 
 
 def test_dataset() -> None:

@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ailab.config import Config
-from ailab.data import create_data_module
-from ailab.data.dataset import DataModule
-from ailab.eval.logger import LoggerManager
+from expt.config import Config
+from expt.data import create_data_module
+from expt.data.dataset import DataModule
+from expt.eval.logger import LoggerManager
 
 
 def label_distribution(data_module: DataModule, logger_manager: LoggerManager) -> None:

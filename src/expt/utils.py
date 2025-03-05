@@ -6,7 +6,7 @@ from timm.data.transforms_factory import create_transform
 from torch import nn
 from torch.utils.data import DataLoader
 
-from ailab.data.dataset import DataModule
+from expt.data.dataset import DataModule
 
 
 def create_rich_progress_bar() -> RichProgressBar:

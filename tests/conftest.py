@@ -6,7 +6,7 @@ import pytest
 import wandb
 from lightning import seed_everything
 
-from ailab.config import Config, ConfigManager
+from expt.config import Config, ConfigManager
 
 
 @pytest.fixture(scope="session")
