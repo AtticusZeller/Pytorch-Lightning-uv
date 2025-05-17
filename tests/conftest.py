@@ -3,9 +3,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-import wandb
 from lightning import seed_everything
 
+import wandb
 from expt.config import Config, ConfigManager
 
 
@@ -36,6 +36,8 @@ def cleanup_wandb(train_config: Config) -> Generator[None, Any, None]:
     yield
     # Delete test runs after all tests
     api = wandb.Api()
+    # for test purposes, we set the entity to "atticux"
+    train_config.logger.entity = "atticux"
     runs = api.runs(f"{train_config.logger.entity}/{train_config.logger.project}")
     for run in runs:
         if run.name.startswith("test_"):

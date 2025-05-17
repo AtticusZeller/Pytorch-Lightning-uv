@@ -9,6 +9,8 @@ def test_wandb_logger_init(train_config: Config, cleanup_wandb: None) -> None:
 
     run_name = "test_run"
     train_config.logger.run_name = run_name
+    # for test purposes, we set the entity to "atticux"
+    train_config.logger.entity = "atticux"
     entity = train_config.logger.entity
     project = train_config.logger.project
     test_config = train_config

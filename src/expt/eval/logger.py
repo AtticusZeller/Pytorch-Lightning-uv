@@ -2,7 +2,6 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Self
 
-import wandb
 import yaml
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
@@ -10,16 +9,13 @@ from rich import print
 from rich.pretty import pprint
 from torch import nn
 
+import wandb
 from expt.config import Config, DataConfig, ModelConfig, OptimizerConfig, TrainingConfig
 
 
 class LoggerManager(WandbLogger):
     """
     Initialize the Weights & Biases logging.
-    ```bash
-    wandb login --relogin --host=http://server_ip:server_port
-    ```
-    NOTE: https has bugs on uploading large artifacts
     Ref:
         1. https://docs.wandb.ai/ref/python/init/
         2. https://docs.wandb.ai/guides/integrations/lightning/
