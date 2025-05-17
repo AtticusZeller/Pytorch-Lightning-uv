@@ -41,9 +41,8 @@ uv sync --dev
 uv pip install -e .
 ```
 
-> [!info]
+> [!note]
 > 1. remember to replace `your_wandb_entity` with your actual W&B entity in the config files and `config.py`
-
 > 2. `uv run` before bash scripts to ensure the environment is activated
 
 ## 📊 Dataset Analysis
