@@ -9,11 +9,11 @@ from pathlib import Path
 
 import torch
 import typer
-import wandb
 from lightning import Trainer, seed_everything
 from lightning.pytorch.callbacks import RichModelSummary
 from rich.console import Console
 
+import wandb
 from expt.cli import (
     ConfigPath,
     EDAFlag,
