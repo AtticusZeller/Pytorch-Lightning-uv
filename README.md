@@ -35,7 +35,10 @@ Click on [<kbd>Use this template</kbd>](https://github.com/AtticusZeller/Pytorch
 ## 🛠️ Installation
 
 ```bash
+# install dependencies
 uv sync --dev
+# install project as a package
+uv pip install -e .
 ```
 
 ## 📊 Dataset Analysis
