@@ -50,7 +50,7 @@ class TrainingConfig:
 @dataclass
 class LoggerConfig:
     run_name: str = "test_run"
-    entity: str = "atticux"  # set to name of your wandb team
+    entity: str = "your_wandb_entity"  # set to name of your wandb team
     project: str = "pytorch-lightning-uv"
 
 
