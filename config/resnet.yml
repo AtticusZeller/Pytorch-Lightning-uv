@@ -4,7 +4,7 @@ data:
   batch_size: 128
   dataset: Fashion MNIST
 logger:
-  entity: atticux
+  entity: your_wandb_entity
   project: pytorch-lightning-uv
   run_name: resnet18_Fashion_MNIST
 model:
