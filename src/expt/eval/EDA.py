@@ -26,7 +26,7 @@ def label_distribution(data_module: DataModule, logger_manager: LoggerManager) -
 
         # Create distribution plot
         plt.figure(figsize=(10, 6))
-        plt.bar(data_module.data.classes, label_counts)
+        plt.bar(data_module.dataset_class.classes, label_counts)
         plt.title(f"{name} Set Label Distribution")
         plt.xlabel("class")
         plt.ylabel("Count")
@@ -46,7 +46,7 @@ def label_distribution(data_module: DataModule, logger_manager: LoggerManager) -
 def sample_images(data_module: DataModule, logger_manager: LoggerManager) -> None:
     # Get dataloaders
     train_loader = data_module.train_dataloader()
-    label_map = data_module.data.classes
+    label_map = data_module.dataset_class.classes
     # Log sample images
     for batch_idx, (images, labels) in enumerate(train_loader):
         if batch_idx == 0:

@@ -19,6 +19,9 @@ class BaseModel(pl.LightningModule):
     Ref: https://colab.research.google.com/github/wandb/examples/blob/master/colabs/pytorch-lightning/Optimize_Pytorch_Lightning_models_with_Weights_%26_Biases.ipynb#scrollTo=gzaiGUAz1saI
     """
 
+    loss: CrossEntropyLoss
+    lr: float
+
     def forward(self, x: Tensor) -> Tensor:
         raise NotImplementedError
 
@@ -203,6 +206,8 @@ class CNN(BaseModel):
 
 
 class FineTuneBaseModel(BaseModel):
+    model: nn.Module
+
     def freeze_except(self, trainable: list[str], debug: bool = False) -> None:
         """freeze all layers except the ones specified in trainable
 

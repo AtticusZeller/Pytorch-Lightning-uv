@@ -116,3 +116,15 @@ def efficientnetv2_pt_transform() -> v2.Compose:
             v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ]
     )
+
+
+def to_tensor_transform() -> v2.Compose:
+    """
+    Transform to convert image to tensor.
+
+    Returns
+    -------
+    v2.Compose
+        Composed transforms
+    """
+    return v2.Compose([v2.ToImage()])

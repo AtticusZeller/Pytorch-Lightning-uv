@@ -251,7 +251,6 @@ class DataModule(L.LightningDataModule):
         return DataLoader(
             self.train_data,
             batch_size=self.batch_size,
-            pin_memory=True,
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
@@ -262,7 +261,6 @@ class DataModule(L.LightningDataModule):
         return DataLoader(
             self.val_data,
             batch_size=self.batch_size,
-            pin_memory=True,
             num_workers=self.num_workers,
             persistent_workers=True,
         )
@@ -271,7 +269,6 @@ class DataModule(L.LightningDataModule):
         """This is the dataloader that the Trainer test() method uses."""
         return DataLoader(
             self.test_data,
-            pin_memory=True,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )

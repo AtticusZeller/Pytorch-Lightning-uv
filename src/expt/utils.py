@@ -29,10 +29,10 @@ def create_rich_progress_bar() -> RichProgressBar:
 
 
 def mean_std(data_module: DataModule) -> tuple[float, float]:
-    dataset = data_module.data(
+    dataset = data_module.dataset_class(
         data_module.data_dir, train=True, transform=data_module.transform
     )
-    loader = DataLoader(dataset, batch_size=len(dataset), pin_memory=True)
+    loader: DataLoader = DataLoader(dataset, batch_size=len(dataset), pin_memory=True)
 
     data = next(iter(loader))[0]
     return data.mean().item(), data.std().item()

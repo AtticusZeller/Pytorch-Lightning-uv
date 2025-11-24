@@ -4,16 +4,16 @@ from torchvision.transforms import v2 as v2
 
 from expt.data import create_data_module
 from expt.data.dataset import MNIST
-from expt.data.transform import reshape_image
+from expt.data.transform import to_tensor_transform
 
 
 def test_dataset() -> None:
     train_dataset = MNIST(
-        root="./data", train=True, download=True, transform=reshape_image
+        root="./data", train=True,  transform=to_tensor_transform()
     )
 
     test_dataset = MNIST(
-        root="./data", train=False, download=True, transform=reshape_image
+        root="./data", train=False, transform=to_tensor_transform()
     )
     train_img = train_dataset[1][0]
     test_img = test_dataset[1][0]
@@ -37,11 +37,11 @@ def test_DataModule():
 
     # Verify train loader properties and data
     assert isinstance(train_loader, DataLoader)
-    assert len(train_loader.dataset) == 55000
+    assert len(train_loader.dataset) == 48000
     for batch in train_loader:
         images, labels = batch
         assert images.shape[0] == min(32, len(images))
-        assert images.shape[1:] == (1, 28, 28)
+        assert images.shape[1:] == (3, 224, 224)
         assert images.dtype == torch.float32
         assert labels.shape[0] == min(32, len(labels))
         assert labels.dtype == torch.int64
@@ -53,11 +53,11 @@ def test_DataModule():
 
     # Verify val loader properties and data
     assert isinstance(val_loader, DataLoader)
-    assert len(val_loader.dataset) == 5000
+    assert len(val_loader.dataset) == 12000
     for batch in val_loader:
         images, labels = batch
         assert images.shape[0] == min(32, len(images))
-        assert images.shape[1:] == (1, 28, 28)
+        assert images.shape[1:] == (3, 224, 224)
         assert images.dtype == torch.float32
         assert labels.shape[0] == min(32, len(labels))
         assert labels.dtype == torch.int64
@@ -73,7 +73,7 @@ def test_DataModule():
     for batch in test_loader:
         images, labels = batch
         assert images.shape[0] == min(32, len(images))
-        assert images.shape[1:] == (1, 28, 28)
+        assert images.shape[1:] == (3, 224, 224)
         assert images.dtype == torch.float32
         assert labels.shape[0] == min(32, len(labels))
         assert labels.dtype == torch.int64
