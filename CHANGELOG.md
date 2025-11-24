@@ -2,134 +2,166 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.3 - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- Additional installation instructions #9 in #10
+- Wandb entity
+- Mypy check
+
+### 🚜 Refactor
+
+- Module name from ailab to expt which means experiment
+- Dataset download and factory class for dataset class
+- Standardize 3 channels transform
+
+### 📚 Documentation
+
+- Fix callout display
+
+### ⚙️ Miscellaneous Tasks
+
+- *(github-actions)* Bump astral-sh/setup-uv from 5 to 6 (#7) in #7
+- *(rye)* Update torch requirement from <=2.6.0,>=2.1 to >=2.1,<=2.7.0 (#6) in #6
+- *(rye)* Update torch requirement from <=2.7.0,>=2.1 to >=2.1,<=2.7.1 (#12) in #12
+- *(rye)* Update torch requirement from <=2.7.1,>=2.1 to >=2.1,<=2.8.0 (#14) in #14
+- *(github-actions)* Bump actions/checkout from 4 to 5 (#13) in #13
+- *(github-actions)* Bump astral-sh/setup-uv from 6 to 7 (#16) in #16
+- *(rye)* Update torch requirement from <=2.8.0,>=2.1 to >=2.1,<=2.9.0 (#17) in #17
+- *(rye)* Update torch requirement from <=2.9.0,>=2.1 to >=2.1,<=2.9.1 (#20) in #20
+- Disable log model to cloud by default
+- Update deps
+- Pre-commit
+
 ## 0.2.2 - 2025-02-20
 
 ### 🐛 Bug Fixes
 
-* Ci release permission
+- Ci release permission
 
 ## 0.2.1 - 2025-02-20
 
 ### 🐛 Bug Fixes
 
-* Git-cliff deps
+- Git-cliff deps
 
 ## 0.2.0 - 2025-02-20
 
 ### 🚀 Features
 
-* Add MNIST class
-* Add to_tensor transform
-* Add lighting data module class
-* Normalize while to_tensor
-* Add config manager class using OmegaConf
-* Add wandb logger
-* Add EDA.py
-* Use fixed random seed
-* Add evaluation debug config
-* Enable with grammar and add download best model
-* Add log_test_results
-* Train and eval MLP MNIST pipeline
-* Train and sweep debug
-* Add wandb sweep
-* Enable dropout and refactor model
-* Add --eda option
-* Add CNN model
-* Add efficient net v2
-* Compile model
-* Add resnet18 and update efficient net
-* Add imagenet transform
-* Rich console print exceptions
-* Fine tune efficientnetV2
-* Using timm pretrained models
+- Add MNIST class
+- Add to_tensor transform
+- Add lighting data module class
+- Normalize while to_tensor
+- Add config manager class using OmegaConf
+- Add wandb logger
+- Add EDA.py
+- Use fixed random seed
+- Add evaluation debug config
+- Enable with grammar and add download best model
+- Add log_test_results
+- Train and eval MLP MNIST pipeline
+- Train and sweep debug
+- Add wandb sweep
+- Enable dropout and refactor model
+- Add --eda option
+- Add CNN model
+- Add efficient net v2
+- Compile model
+- Add resnet18 and update efficient net
+- Add imagenet transform
+- Rich console print exceptions
+- Fine tune efficientnetV2
+- Using timm pretrained models
 
 ### 🐛 Bug Fixes
 
-* Replace omegaconf with dataclass asdict
-* Mkdir for logs/
-* Shuffle train dataset
-* Dataloader workers
-* Remove log all models
-* Num_workers while loading data
-* Wandb config failed update with sweep
-* Type annotation
-* Avoid recompile
-* Seed_everything
-* Upload artifact error
-* Logger upload large artifacts
-* Test data transform
-* Transform type
-* Num_workers
-* Imagenet transform
-* Fine-tune
+- Replace omegaconf with dataclass asdict
+- Mkdir for logs/
+- Shuffle train dataset
+- Dataloader workers
+- Remove log all models
+- Num_workers while loading data
+- Wandb config failed update with sweep
+- Type annotation
+- Avoid recompile
+- Seed_everything
+- Upload artifact error
+- Logger upload large artifacts
+- Test data transform
+- Transform type
+- Num_workers
+- Imagenet transform
+- Fine-tune
 
 ### 🚜 Refactor
 
-* Update data.py as data module
-* Simplify transform func
-* Inherit WandbLogger
-* Remove omegaconfig
-* Split into 3 function
-* Simply config manager
-* Dataset module
-* Dataset class property
-* Typer cli redundant code
-* Add create_model factory function
-* Calculate dataset std, mean
-* Cli options
-* Mean_std
+- Update data.py as data module
+- Simplify transform func
+- Inherit WandbLogger
+- Remove omegaconfig
+- Split into 3 function
+- Simply config manager
+- Dataset module
+- Dataset class property
+- Typer cli redundant code
+- Add create_model factory function
+- Calculate dataset std,mean
+- Cli options
+- Mean_std
 
 ### 📚 Documentation
 
-* Init README.md
-* Update README
+- Init README.md
+- Update README
 
 ### ⚡ Performance
 
-* Pin_memory dataset loader
-* Upgrade hyperparams
+- Pin_memory dataset loader
+- Upgrade hyperparams
 
 ### 🎨 Styling
 
-* Beatify logs output
-* Pre-commit
-* Pre-commit update
+- Beatify logs output
+- Pre-commit
+- Pre-commit update
 
 ### 🧪 Testing
 
-* Torch env test
-* Add test_dataset
-* Add other type to transform to tensor
-* Check all data
-* Add config fixtures
-* Calculate dataset mean std
-* Ruff first
-* Strict false mypy
-* Add pre-commit.sh
+- Torch env test
+- Add test_dataset
+- Add other type to transform to tensor
+- Check all data
+- Add config fixtures
+- Calculate dataset mean std
+- Ruff first
+- Strict false mypy
+- Add pre-commit.sh
 
 ### ⚙️ Miscellaneous Tasks
 
-* *(github-actions)* Bump astral-sh/setup-uv from 3 to 5
-* *(rye)* Update torch requirement from <=2.5, >=2.1 to >=2.1, <=2.6.0
-* Justmycode while debugging
-* Add ./vscode/settings.json
-* Update config
-* Update default config
-* Remove useless config attr in LoggerConfig
-* Update seed
-* Ignore artifacts
-* Pprint runtime config
-* Pre-commit
-* Rename model class
-* Rename attr and format
-* Add Fashion MNIST config
-* Rename src/package into expt
-* Add abc function
-* Remove transform type
-* Update dev config
-* Finetune -1
-* Rename config
-* Finetune last3
-* Update clean shell
+- *(github-actions)* Bump astral-sh/setup-uv from 3 to 5
+- *(rye)* Update torch requirement from <=2.5,>=2.1 to >=2.1,<=2.6.0
+- Justmycode while debugging
+- Add ./vscode/settings.json
+- Update config
+- Update default config
+- Remove useless config attr in LoggerConfig
+- Update seed
+- Ignore artifacts
+- Pprint runtime config
+- Pre-commit
+- Rename model class
+- Rename attr and format
+- Add Fashion MNIST config
+- Rename src/package into ailab
+- Add abc function
+- Remove transform type
+- Update dev config
+- Finetune -1
+- Rename config
+- Finetune last3
+- Update clean shell
 
 <!-- generated by git-cliff -->
