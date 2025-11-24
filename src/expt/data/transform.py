@@ -7,7 +7,7 @@ from torchvision.transforms import InterpolationMode
 
 def base_transform(target_size: tuple[int, int] = (224, 224)) -> v2.Compose:
     """
-    Basic transform: convert to RGB (expand grayscale to 3 channels), resize and convert to tensor.
+    Basic transform: convert to RGB, resize and convert to tensor.
 
     Parameters
     ----------
@@ -42,7 +42,7 @@ def standardize_transform(
     Parameters
     ----------
     mean : Sequence[float]
-        Mean values for each channel (expects 3 values for RGB)
+        Mean values for each channel
     std : Sequence[float]
         Standard deviation values for each channel (expects 3 values for RGB)
     target_size : tuple[int, int], default=(224, 224)

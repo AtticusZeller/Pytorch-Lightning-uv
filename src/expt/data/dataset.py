@@ -286,5 +286,5 @@ class DataModule(L.LightningDataModule):
         if not self.data_dir.exists():
             raise RuntimeError(
                 f"Dataset directory not found: {self.data_dir}\n"
-                "Please ensure the dataset has been downloaded using the provided scripts."
+                "Please ensure the dataset has been downloaded."
             )
