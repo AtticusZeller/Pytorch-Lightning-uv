@@ -1,15 +1,14 @@
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-from urllib.error import URLError
 
 import lightning as L
 from torch import Tensor
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.mnist import read_image_file, read_label_file
-from torchvision.datasets.utils import check_integrity, download_and_extract_archive
-from torchvision.transforms import v2 as v2
+from torchvision.datasets.utils import check_integrity
+from torchvision.transforms import v2
 
 
 class DataSetBase(VisionDataset):
@@ -23,19 +22,16 @@ class DataSetBase(VisionDataset):
         train: bool = True,
         transform: Callable | None = None,
         target_transform: Callable | None = None,
-        download: bool = True,
     ) -> None:
         super().__init__(root, transform=transform, target_transform=target_transform)
         self.root = Path(self.root)
 
         self.train = train  # training set or test set
 
-        if download:
-            self._download()
-
         if not self._check_exists():
             raise RuntimeError(
-                "Dataset not found. You can use download=True to download it"
+                f"Dataset not found at {self.root}. "
+                "Please ensure the dataset has been downloaded."
             )
 
         self.data, self.targets = self._load_data()
@@ -43,7 +39,7 @@ class DataSetBase(VisionDataset):
     def _load_data(self) -> tuple[Tensor, Tensor]:
         raise NotImplementedError
 
-    def _download(self) -> None:
+    def _check_exists(self) -> bool:
         raise NotImplementedError
 
     @property
@@ -67,15 +63,10 @@ class DataSetBase(VisionDataset):
 
 class MNIST(DataSetBase):
     """`MNIST <http://yann.lecun.com/exdb/mnist/>` Dataset.
-    Responsible for downloading,vectorize and splitting it into train and test dataset.
-    It is a subclass of torch.utils.data Dataset class.
-    It is necessary to override the ``__getitem__`` and ``__len__`` method.
-    """
 
-    mirrors = [
-        "http://yann.lecun.com/exdb/mnist/",
-        "https://ossci-datasets.s3.amazonaws.com/mnist/",
-    ]
+    Dataset should be downloaded using external scripts before use.
+    This class only loads and processes pre-downloaded data.
+    """
 
     resources = [
         ("train-images-idx3-ubyte.gz", "f68b3c2dcbeaaa9fbdd348bbdeb94873"),
@@ -96,15 +87,15 @@ class MNIST(DataSetBase):
         "8 - eight",
         "9 - nine",
     ]
-    mean = (0.1307,)
-    std = (0.3081,)
+    mean = (0.1307, 0.1307, 0.1307)  # RGB channels for grayscale expanded to 3 channels
+    std = (0.3081, 0.3081, 0.3081)
 
     def _load_data(self) -> tuple[Tensor, Tensor]:
         image_file = f"{'train' if self.train else 't10k'}-images-idx3-ubyte"
-        data = read_image_file(self.raw_folder.joinpath(image_file))
+        data = read_image_file(self.raw_folder.joinpath(image_file).as_posix())
 
         label_file = f"{'train' if self.train else 't10k'}-labels-idx1-ubyte"
-        targets = read_label_file(self.raw_folder.joinpath(label_file))
+        targets = read_label_file(self.raw_folder.joinpath(label_file).as_posix())
 
         return data, targets
 
@@ -128,40 +119,16 @@ class MNIST(DataSetBase):
             for url, _ in self.resources
         )
 
-    def _download(self) -> None:
-        # check
-        if self._check_exists():
-            return
-
-        self.raw_folder.mkdir(parents=True, exist_ok=True)
-
-        # download files
-        for filename, md5 in self.resources:
-            for mirror in self.mirrors:
-                url = f"{mirror}{filename}"
-                try:
-                    print(f"Downloading {url}")
-                    download_and_extract_archive(
-                        url, download_root=self.raw_folder, filename=filename, md5=md5
-                    )
-                except URLError as error:
-                    print(f"Failed to download (trying next):\n{error}")
-                    continue
-                finally:
-                    print()
-                break
-            else:
-                raise RuntimeError(f"Error downloading {filename}")
-
     def extra_repr(self) -> str:
         split = "Train" if self.train is True else "Test"
         return f"Split: {split}"
 
 
 class FashionMNIST(MNIST):
-    """`Fashion-MNIST <https://github.com/zalandoresearch/fashion-mnist>`_ Dataset."""
+    """`Fashion-MNIST <https://github.com/zalandoresearch/fashion-mnist>`_ Dataset.
 
-    mirrors = ["http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"]
+    Dataset should be downloaded using external scripts before use.
+    """
 
     resources = [
         ("train-images-idx3-ubyte.gz", "8d4fb7e6c68d591d4c3dfef9ec88bf0d"),
@@ -181,40 +148,101 @@ class FashionMNIST(MNIST):
         "Bag",
         "Ankle boot",
     ]
-    mean = (0.2860,)
-    std: tuple[float, ...] = (0.3530,)
+    mean = (0.2860, 0.2860, 0.2860)  # RGB channels for grayscale expanded to 3 channels
+    std: tuple[float, ...] = (0.3530, 0.3530, 0.3530)
 
 
 class DataModule(L.LightningDataModule):
-    """lightning DataModule for MNIST dataset
+    """Lightning DataModule for datasets.
+
+    Automatically initializes the dataset class based on data_dir path.
     Ref: `https://lightning.ai/docs/pytorch/stable/data/datamodule.html#lightningdatamodule`
     """
 
+    # Dataset registry mapping directory names to dataset classes
+    DATASET_REGISTRY = {"MNIST": MNIST, "FashionMNIST": FashionMNIST}
+
     def __init__(
         self,
-        data: DataSetBase,
         data_dir: str | Path = "./data",
         batch_size: int = 32,
         transforms: v2.Compose | None = None,
+        val_split: float = 0.2,
     ) -> None:
+        """
+        Initialize DataModule.
+
+        Parameters
+        ----------
+        data_dir : str | Path
+            Root directory containing the dataset
+        batch_size : int
+            Batch size for dataloaders
+        transforms : v2.Compose | None
+            Transforms to apply to the data
+        val_split : float
+            Fraction of training data to use for validation
+        """
         super().__init__()
         self.data_dir = Path(data_dir)
-        self.data_dir.mkdir(parents=True, exist_ok=True)
         self.batch_size = batch_size
-
         self.transform = transforms
-        self.data = data
+        self.val_split = val_split
         self.num_workers = 8
 
-    def setup(self, stage: str) -> None:
-        # Assign train/val datasets for use in dataloaders
-        if stage == "fit":
-            full_data = self.data(self.data_dir, train=True, transform=self.transform)
-            self.train_data, self.val_data = random_split(full_data, [55000, 5000])
+        # Determine dataset class from directory structure
+        self.dataset_class = self._get_dataset_class()
 
-        # Assign test dataset for use in dataloader(s)
-        if stage == "test":
-            self.test_data = self.data(
+    def _get_dataset_class(self) -> type[DataSetBase]:
+        """
+        Determine which dataset class to use based on data_dir structure.
+
+        Returns
+        -------
+        type[DataSetBase]
+            Dataset class to instantiate
+
+        Raises
+        ------
+        ValueError
+            If dataset type cannot be determined from directory structure
+        """
+        # Check for dataset-specific subdirectories
+        for dataset_name, dataset_cls in self.DATASET_REGISTRY.items():
+            dataset_path = self.data_dir / dataset_name
+            if dataset_path.exists():
+                return dataset_cls
+
+        raise ValueError(
+            f"Cannot determine dataset type from {self.data_dir}. "
+            f"Expected one of: {list(self.DATASET_REGISTRY.keys())}"
+        )
+
+    def setup(self, stage: str | None = None) -> None:
+        """
+        Setup datasets for different stages.
+
+        Parameters
+        ----------
+        stage : str | None
+            Stage name ('fit', 'validate', 'test', or None for all)
+        """
+        if stage == "fit" or stage is None:
+            # Load full training dataset
+            full_data = self.dataset_class(
+                self.data_dir, train=True, transform=self.transform
+            )
+
+            # Calculate train/val split
+            train_size = int(len(full_data) * (1 - self.val_split))
+            val_size = len(full_data) - train_size
+            self.train_data, self.val_data = random_split(
+                full_data, [train_size, val_size]
+            )
+
+        if stage == "test" or stage is None:
+            # Load test dataset
+            self.test_data = self.dataset_class(
                 self.data_dir, train=False, transform=self.transform
             )
 
@@ -227,7 +255,6 @@ class DataModule(L.LightningDataModule):
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            # drop_last=True,  # avoid compile error because of different batch size
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -238,7 +265,6 @@ class DataModule(L.LightningDataModule):
             pin_memory=True,
             num_workers=self.num_workers,
             persistent_workers=True,
-            # drop_last=True,  # avoid compile error because of different batch size
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -251,6 +277,14 @@ class DataModule(L.LightningDataModule):
         )
 
     def prepare_data(self) -> None:
-        """load raw data or tokenize data"""
-        self.data(self.data_dir, train=True, download=True)
-        self.data(self.data_dir, train=False, download=True)
+        """
+        Prepare data (download, tokenize, etc.).
+
+        This method is called only on one GPU in distributed training.
+        For this dataset, we just verify it exists.
+        """
+        if not self.data_dir.exists():
+            raise RuntimeError(
+                f"Dataset directory not found: {self.data_dir}\n"
+                "Please ensure the dataset has been downloaded using the provided scripts."
+            )

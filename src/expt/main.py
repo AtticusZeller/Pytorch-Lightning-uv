@@ -47,6 +47,7 @@ def training(config: Config) -> str | None:
         # dataset
         datamodule = create_data_module(
             name=config.data.dataset,
+            data_dir=config.data.data_dir,
             batch_size=config.data.batch_size,
             transform=config.data.transform,
         )
@@ -86,6 +87,7 @@ def evaluation(config: Config, run_id: str) -> None:
     # data
     datamodule = create_data_module(
         name=config.data.dataset,
+        data_dir=config.data.data_dir,
         batch_size=config.data.batch_size,
         transform=config.data.transform,
     )
