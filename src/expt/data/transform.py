@@ -2,90 +2,83 @@ from collections.abc import Sequence
 
 import torch
 import torchvision.transforms.v2 as v2
-from kornia.image import ChannelsOrder, Image, ImageLayout, ImageSize, PixelFormat
-from kornia.image.base import ColorSpace
-from torch import Tensor
 from torchvision.transforms import InterpolationMode
 
-# def create_augmentation_pipeline(image_size=224) -> v2.Compose:
-#     """
-#     Creates data augmentation pipeline for object detection
-#     """
-#     transforms = v2.Compose(
-#         [
-#             # Convert input to standard format
-#             v2.ToImage(),
-#             # Color augmentations
-#             v2.RandomPhotometricDistort(
-#                 brightness=(0.8, 1.2),
-#                 contrast=(0.8, 1.2),
-#                 saturation=(0.8, 1.2),
-#                 hue=(-0.1, 0.1),
-#                 p=1.0,
-#             ),
-#             # Geometric augmentations
-#             v2.RandomZoomOut(
-#                 fill={tv_tensors.Image: (123, 117, 104), "others": 0},
-#                 side_range=(1.0, 4.0),
-#                 p=0.5,
-#             ),
-#             v2.RandomIoUCrop(),
-#             v2.RandomHorizontalFlip(p=1.0),
-#             # Clean up bounding boxes
-#             v2.SanitizeBoundingBoxes(),
-#             # Convert to final format
-#             v2.ToDtype(torch.float32, scale=True),
-#         ]
-#     )
-#     return transforms
 
-
-def reshape_image(img: Tensor) -> Tensor:
-    """Reshape image tensor to channels first
+def base_transform(target_size: tuple[int, int] = (224, 224)) -> v2.Compose:
+    """
+    Basic transform: convert to RGB (expand grayscale to 3 channels), resize and convert to tensor.
 
     Parameters
     ----------
-    img : Tensor
-        Input tensor with shape (H, W)
+    target_size : tuple[int, int], default=(224, 224)
+        Target size (height, width) for images
 
     Returns
     -------
-    Image
-        Kornia Image Tensor with shape (C, H, W)
+    v2.Compose
+        Composed transforms
     """
-    if img.dim() == 2:
-        # Add channel dimension
-        img_channels_first = img.unsqueeze(0)
-
-    # Define image layout
-    layout = ImageLayout(
-        image_size=ImageSize(28, 28),
-        channels=1,
-        channels_order=ChannelsOrder.CHANNELS_FIRST,
+    return v2.Compose(
+        [
+            v2.ToImage(),
+            v2.Grayscale(num_output_channels=3),  # Ensure all images have 3 channels
+            v2.Resize(
+                target_size, interpolation=InterpolationMode.BILINEAR, antialias=True
+            ),
+            v2.ToDtype(torch.float32, scale=True),
+        ]
     )
 
-    # Define pixel format
-    pixel_format = PixelFormat(color_space=ColorSpace.GRAY, bit_depth=8)
 
-    # Create kornia Image
-    return Image(img_channels_first, pixel_format, layout).data
+def standardize_transform(
+    mean: Sequence[float],
+    std: Sequence[float],
+    target_size: tuple[int, int] = (224, 224),
+) -> v2.Compose:
+    """
+    Transform with standardization using dataset statistics.
 
+    Parameters
+    ----------
+    mean : Sequence[float]
+        Mean values for each channel (expects 3 values for RGB)
+    std : Sequence[float]
+        Standard deviation values for each channel (expects 3 values for RGB)
+    target_size : tuple[int, int], default=(224, 224)
+        Target size (height, width) for images
 
-def base_transform() -> v2.Compose:
-    return v2.Compose([reshape_image, v2.ToDtype(torch.float32, scale=True)])
-
-
-def standardize_transform(mean: Sequence[float], std: Sequence[float]) -> v2.Compose:
+    Returns
+    -------
+    v2.Compose
+        Composed transforms
+    """
     return v2.Compose(
-        [reshape_image, v2.ToDtype(torch.float32, scale=True), v2.Normalize(mean, std)]
+        [
+            v2.ToImage(),
+            v2.Grayscale(num_output_channels=3),  # Ensure all images have 3 channels
+            v2.Resize(
+                target_size, interpolation=InterpolationMode.BILINEAR, antialias=True
+            ),
+            v2.ToDtype(torch.float32, scale=True),
+            v2.Normalize(mean=mean, std=std),
+        ]
     )
 
 
 def resnet_pt_transform() -> v2.Compose:
+    """
+    Transform for ResNet pretrained models (ImageNet preprocessing).
+
+    Returns
+    -------
+    v2.Compose
+        Composed transforms with ImageNet normalization
+    """
     return v2.Compose(
         [
-            reshape_image,
-            v2.Grayscale(num_output_channels=3),
+            v2.ToImage(),
+            v2.Grayscale(num_output_channels=3),  # Ensure all images have 3 channels
             v2.Resize(
                 235,
                 interpolation=InterpolationMode.BICUBIC,
@@ -100,10 +93,18 @@ def resnet_pt_transform() -> v2.Compose:
 
 
 def efficientnetv2_pt_transform() -> v2.Compose:
+    """
+    Transform for EfficientNetV2 pretrained models.
+
+    Returns
+    -------
+    v2.Compose
+        Composed transforms
+    """
     return v2.Compose(
         [
-            reshape_image,
-            v2.Grayscale(num_output_channels=3),
+            v2.ToImage(),
+            v2.Grayscale(num_output_channels=3),  # Ensure all images have 3 channels
             v2.Resize(
                 300,
                 interpolation=InterpolationMode.BICUBIC,
