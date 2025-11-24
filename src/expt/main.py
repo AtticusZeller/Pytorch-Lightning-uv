@@ -41,7 +41,7 @@ def training(config: Config) -> str | None:
         run_name=config.logger.run_name,
         entity=config.logger.entity,
         project=config.logger.project,
-        log_model=True,  # enable log model ckpt
+        log_model=False,  # disable log model ckpt by default
         config=config,
     ) as logger:
         # dataset

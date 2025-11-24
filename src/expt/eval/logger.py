@@ -29,7 +29,7 @@ class LoggerManager(WandbLogger):
         project: str,
         config: Config,
         id: str | None = None,
-        log_model: bool = True,
+        log_model: bool = False,
         job_type: str = "train",
     ) -> None:
         Path("./logs").mkdir(parents=True, exist_ok=True)
@@ -51,6 +51,7 @@ class LoggerManager(WandbLogger):
         self.job_type = job_type
         self.config = config
         self._watched_models: list[nn.Module] = []
+        self._log_model = log_model  # Store log_model flag for later use
 
         if self.sweeping:
             # update from sweep
@@ -73,7 +74,7 @@ class LoggerManager(WandbLogger):
         # Unwatch all models that were watched
         for model in self._watched_models:
             self.experiment.unwatch(model)
-        if self.job_type == "train" and not self.sweeping:
+        if self._log_model and self.job_type == "train" and not self.sweeping:
             self.upload_best_model()
         # Finish the wandb run
         self.experiment.finish()
