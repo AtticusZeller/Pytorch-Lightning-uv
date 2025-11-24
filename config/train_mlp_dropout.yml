@@ -3,7 +3,7 @@ data:
   batch_size: 128
   dataset: MNIST
 logger:
-  entity: your_wandb_entity
+  entity: atticux
   project: pytorch-lightning-uv
   run_name: test_MLP_Dropout_batchnorm
 model:

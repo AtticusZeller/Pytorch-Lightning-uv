@@ -4,7 +4,7 @@ data:
   dataset: MNIST
   transform: standardize
 logger:
-  entity: your_wandb_entity
+  entity: atticux
   project: pytorch-lightning-uv
   run_name: test_run
 model:
